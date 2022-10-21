@@ -13,13 +13,13 @@ public:
     ~Platform();
 
 protected:
-    int m_ScreenWidth, m_ScreenHeight;
+    int m_WindowWidth, m_WindowHeight;
 
     Sprite* m_PlatformSprite;
-    int m_PlatformSpriteWidth;
-    int m_PlatformSpriteHeight;
+    unsigned int m_PlatformSpriteWidth;
+    unsigned int m_PlatformSpriteHeight;
 
-    int m_PlatformPosX;
-    int m_PlatformPosY;
+    unsigned int m_PlatformPosX;
+    unsigned int m_PlatformPosY;
 };
 

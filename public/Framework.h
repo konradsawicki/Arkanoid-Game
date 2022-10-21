@@ -11,7 +11,6 @@
     #define FRAMEWORK_API 
 #endif
 
-
 // Bonus for any found bugs in the framework!
 
 class Sprite;

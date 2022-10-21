@@ -1,7 +1,7 @@
 .PHONY: all
 all: Arkanoid
 
-Arkanoid: Game.o Platform.o Mouse.o Wall.o
+Arkanoid: Game.o Platform.o Mouse.o WallElement.o
 	g++ -o Arkanoid $^ -L. -lFrameworkRelease_x64
 
 Game.o: Game.cpp

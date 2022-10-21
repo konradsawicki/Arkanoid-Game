@@ -8,12 +8,12 @@ Platform::Platform(const char* Path)
 {
     m_PlatformSprite = createSprite(Path);
 
-    getScreenSize(m_ScreenWidth, m_ScreenHeight);
-    m_PlatformSpriteWidth = m_ScreenWidth / 8;
-    m_PlatformSpriteHeight = m_ScreenHeight / 19;
+    getScreenSize(m_WindowWidth, m_WindowHeight);
+    m_PlatformSpriteWidth = m_WindowWidth / 8;
+    m_PlatformSpriteHeight = m_WindowHeight / 19;
     setSpriteSize(m_PlatformSprite, m_PlatformSpriteWidth, m_PlatformSpriteHeight);
-    m_PlatformPosX = m_ScreenWidth / 2 - m_PlatformSpriteWidth / 2;
-    m_PlatformPosY = m_ScreenHeight - m_ScreenHeight / 7;
+    m_PlatformPosX = m_WindowWidth / 2 - m_PlatformSpriteWidth / 2;
+    m_PlatformPosY = m_WindowHeight - m_WindowHeight / 7;
 }
 
 void Platform::Draw()
@@ -23,14 +23,14 @@ void Platform::Draw()
 
 void Platform::MoveRight(float ElapsedTime)
 {
-    if (m_PlatformPosX < m_ScreenWidth - m_PlatformSpriteWidth)
-        m_PlatformPosX += (m_ScreenWidth / 600) * ElapsedTime;
+    if (m_PlatformPosX < m_WindowWidth - m_PlatformSpriteWidth)
+        m_PlatformPosX += (m_WindowWidth / 600) * ElapsedTime;
 }
 
 void Platform::MoveLeft(float ElapsedTime)
 {
     if (m_PlatformPosX > 0)
-        m_PlatformPosX -= (m_ScreenWidth / 600) * ElapsedTime;
+        m_PlatformPosX -= (m_WindowWidth / 600) * ElapsedTime;
 }
 
 Platform::~Platform()

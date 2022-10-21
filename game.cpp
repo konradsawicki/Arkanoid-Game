@@ -6,12 +6,11 @@
 #include "Framework.h"
 #include "Platform.h"
 #include "Mouse.h"
+#include "WallElement.h"
 #include <regex>
 #include <Windows.h>
 #include <string>
 #include <iostream>
-#include <iomanip>
-#include <chrono>
 
 /* Test Framework realization */
 class MyFramework : public Framework 
@@ -19,7 +18,8 @@ class MyFramework : public Framework
 public:
 
 	MyFramework(unsigned WindowWidth = 1024, unsigned WindowHeight = 768)
-		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight)
+		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
+			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23)
 	{
 	}
 
@@ -33,6 +33,16 @@ public:
 	virtual void InitPlatform()
 	{
 		m_Platform = std::make_unique<Platform>("data/50-Breakout-Tiles.png");
+	}
+
+	virtual void InitWallElements()
+	{
+		for (int i = 0; i < 2 * m_NumberOfWallElementsHeight + m_NumberOfWallElementsWidth - 6; ++i) // minus 6 elements on width
+		{
+			m_WallElements.push_back(std::make_unique<WallElement>("data/29-Breakout-Tiles.png", 
+				m_NumberOfWallElementsWidth, m_NumberOfWallElementsHeight));
+		}
+		// if (y == 0 || x == 0 || x == NumberOfWallElementsWidth - 1)
 	}
 
 	virtual void InitMouse()
@@ -61,6 +71,7 @@ public:
 	{	
 		InitTimePoints();
 		InitBackground();
+		InitWallElements();
 		InitPlatform();
 		InitMouse();
 		return true;
@@ -71,13 +82,58 @@ public:
 
 	}
 
+	virtual void DrawBackground()
+	{
+		drawSprite(m_BackgroundSprite, 0, 0);
+	}
+
+	virtual void DrawWallElements()
+	{
+		int counter = 0;
+		int x_start = m_WindowWidth / 11;
+		int y_start = 0;
+		int y1 = 0;
+		int y2 = 0;
+		int x = m_WindowWidth / 11;
+		for (auto& e : m_WallElements)
+		{	
+			if (counter < m_NumberOfWallElementsHeight)
+			{
+				e->Draw(x_start, y1);
+				y1 += e->GetWallElementSize().height;
+				counter++;
+			}
+			else if (counter >= m_NumberOfWallElementsHeight && counter < m_NumberOfWallElementsHeight + m_NumberOfWallElementsWidth - 6)
+			{
+				e->Draw(x + e->GetWallElementSize().width, y_start);
+				x += e->GetWallElementSize().width;
+				counter++;
+			}
+			else if (counter >= m_NumberOfWallElementsHeight + m_NumberOfWallElementsWidth - 6)
+			{
+				e->Draw(x_start + e->GetWallElementSize().width + (m_NumberOfWallElementsWidth - 6) * e->GetWallElementSize().width, y2);
+				y2 += e->GetWallElementSize().height;
+				counter++;
+			}
+		}
+	}
+
+	virtual void DrawPlatform()
+	{
+		m_Platform->Draw();
+	}
+
 	virtual bool Tick() override
 	{	
 		UpdateElapsedTime();
-		DrawBackground();
 		UpdateMousePosition();
+
 		CheckIfKeyPressed();
-		m_Platform->Draw();
+
+		DrawBackground();
+		DrawWallElements();
+		DrawPlatform();
+
 		onMouseMove(p.x, p.y, m_MousePosition.x, m_MousePosition.y);
 
 		return false;
@@ -176,11 +232,6 @@ public:
 		return "Arcanoid";
 	}
 
-	virtual void DrawBackground()
-	{
-		drawSprite(m_BackgroundSprite, 0, 0);
-	}
-
 	~MyFramework()
 	{
 
@@ -202,6 +253,10 @@ protected:
 	bool m_MouseAppeared = false;
 	HWND m_hWnd;
 	std::unique_ptr<Mouse> m_Mouse;
+
+	std::vector<std::unique_ptr<WallElement>> m_WallElements;
+	unsigned int m_NumberOfWallElementsWidth;
+	unsigned int m_NumberOfWallElementsHeight;
 
 	Sprite* m_BackgroundSprite;
 };
