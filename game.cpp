@@ -52,68 +52,52 @@ public:
 
 	}
 
-
-
 	virtual bool Tick() override
 	{
         drawTestBackground();
 		UpdateMousePosition();
 		m_Platform->Draw(100, 100);
-		m_Mouse->Draw(m_MousePosition.x, m_MousePosition.y);
+		if (m_MouseAppeared)
+			m_Mouse->Draw(m_MousePosition.x, m_MousePosition.y);
 		
 		return false;
 	}
 
 	virtual void UpdateMousePosition()
 	{
-		GetCursorPos(&m_MousePosition);
-		ScreenToClient(m_hWnd, &m_MousePosition);
-		if (m_MousePosition.x < 0)
+		GetCursorPos(&p);
+		ScreenToClient(m_hWnd, &p);
+		if (p.x < 0 && !m_BlockMousePos)
 		{
-			if (!m_BlockMousePosY)
-			{
-				m_TempMousePosY = m_MousePosition.y;
-				m_BlockMousePosY = true;
-			}
+			m_BlockMousePos = true;
+			m_MousePosition.y = p.y;
 			m_MousePosition.x = 0;
-			m_MousePosition.y = m_TempMousePosY;
 		}
-		else if (m_MousePosition.x > m_WindowWidth)
+		else if (p.x > m_WindowWidth && !m_BlockMousePos)
 		{
-			if (!m_BlockMousePosY)
-			{
-				m_TempMousePosY = m_MousePosition.y;
-				m_BlockMousePosY = true;
-			}
+			m_BlockMousePos = true;
+			m_MousePosition.y = p.y;
 			m_MousePosition.x = m_WindowWidth;
-			m_MousePosition.y = m_TempMousePosY;
 		}
-		else
-			m_BlockMousePosY = false;
 
-
-		if (m_MousePosition.y < 0)
+		if (p.y < 0 && !m_BlockMousePos)
 		{
-			if (!m_BlockMousePosX)
-			{
-				m_TempMousePosX = m_MousePosition.x;
-				m_BlockMousePosX = true;
-			}
+			m_BlockMousePos = true;
+			m_MousePosition.x = p.x;
 			m_MousePosition.y = 0;
-			m_MousePosition.x = m_TempMousePosX;
 		}
-		else if (m_MousePosition.y > m_WindowHeight)
+		else if (p.y > m_WindowHeight && !m_BlockMousePos)
 		{
-			if (!m_BlockMousePosX)
-			{
-				m_TempMousePosX = m_MousePosition.x;
-				m_BlockMousePosX = true;
-			}
+			m_BlockMousePos = true;
+			m_MousePosition.x = p.x;
 			m_MousePosition.y = m_WindowHeight;
-			m_MousePosition.x = m_TempMousePosX;
 		}
-		else
-			m_BlockMousePosX = false;
+		else if (p.x > 0 && p.x <= m_WindowWidth && p.y > 0 && p.y <= m_WindowHeight)
+		{
+			m_BlockMousePos = false;
+			m_MouseAppeared = true;
+			m_MousePosition = p;
+		}
 	}
 
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
@@ -152,11 +136,10 @@ protected:
 
 	std::unique_ptr<Platform> m_Platform;
 
+	POINT p;
 	POINT m_MousePosition;
-	bool m_BlockMousePosX = false;
-	bool m_BlockMousePosY = false;
-	int m_TempMousePosX;
-	int m_TempMousePosY;
+	bool m_BlockMousePos = true;
+	bool m_MouseAppeared = false;
 	HWND m_hWnd;
 	std::unique_ptr<Mouse> m_Mouse;
 };
