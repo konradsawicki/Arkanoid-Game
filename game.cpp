@@ -3,11 +3,10 @@
 #include "Framework.h"
 #include <regex>
 #include <iostream>
-#include "test.h"
 
 /* Test Framework realization */
-class MyFramework : public Framework {
-
+class MyFramework : public Framework 
+{
 public:
 
 	MyFramework(unsigned WindowWidth = 800, unsigned WindowHeight = 600)
@@ -15,39 +14,47 @@ public:
 	{
 	}
 
-	virtual void PreInit(int& width, int& height, bool& fullscreen)
+	virtual void PreInit(int& width, int& height, bool& fullscreen) override
 	{
 		width = m_WindowWidth;
 		height = m_WindowHeight;
 		fullscreen = false;
 	}
 
-	virtual bool Init() {
-
+	virtual bool Init() override
+	{
 		return true;
 	}
 
-	virtual void Close() {
+	virtual void Close() override
+	{
 
 	}
 
-	virtual bool Tick() {
+	virtual bool Tick() override
+	{
         drawTestBackground();
 		return false;
 	}
 
-	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) {
+	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
+	{
 
 	}
 
-	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) {
+	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) override
+	{
 
 	}
 
-	virtual void onKeyPressed(FRKey k) {
+	virtual void onKeyPressed(FRKey k) override
+	{
+
 	}
 
-	virtual void onKeyReleased(FRKey k) {
+	virtual void onKeyReleased(FRKey k) override
+	{
+
 	}
 	
 	virtual const char* GetTitle() override
@@ -55,7 +62,7 @@ public:
 		return "Arcanoid";
 	}
 
-private:
+protected:
 	unsigned m_WindowWidth;
 	unsigned m_WindowHeight;
 };
@@ -71,7 +78,6 @@ std::smatch GetWindowSize(std::string WindowSize)
 
 int main(int argc, char* argv[])
 {
-	Test asd;
 	if (argc == 3 && strcmp(argv[1], "-window") == 0)
 	{
 		auto WindowSize = GetWindowSize(argv[2]);
