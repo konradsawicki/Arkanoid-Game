@@ -10,6 +10,8 @@
 #include <Windows.h>
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <chrono>
 
 /* Test Framework realization */
 class MyFramework : public Framework 
@@ -49,8 +51,15 @@ public:
 		setSpriteSize(m_BackgroundSprite, m_WindowWidth, m_WindowHeight);
 	}
 
+	virtual void InitTimePoints()
+	{
+		m_StartTimePoint = getTickCount();
+		m_EndTimePoint = getTickCount();
+	}
+
 	virtual bool Init() override
 	{	
+		InitTimePoints();
 		InitBackground();
 		InitPlatform();
 		InitMouse();
@@ -63,7 +72,8 @@ public:
 	}
 
 	virtual bool Tick() override
-	{
+	{	
+		UpdateElapsedTime();
 		DrawBackground();
 		UpdateMousePosition();
 		CheckIfKeyPressed();
@@ -71,6 +81,13 @@ public:
 		onMouseMove(p.x, p.y, m_MousePosition.x, m_MousePosition.y);
 
 		return false;
+	}
+
+	virtual void UpdateElapsedTime()
+	{
+		m_EndTimePoint = getTickCount();
+		m_ElapsedTime = m_EndTimePoint - m_StartTimePoint;
+		m_StartTimePoint = m_EndTimePoint;
 	}
 
 	virtual void UpdateMousePosition()
@@ -123,7 +140,8 @@ public:
 
 	virtual void CheckIfKeyPressed()
 	{
-		if (GetAsyncKeyState(VK_RIGHT))
+		if (GetAsyncKeyState(VK_RIGHT) && GetAsyncKeyState(VK_LEFT));
+		else if (GetAsyncKeyState(VK_RIGHT))
 		{
 			onKeyPressed(FRKey::RIGHT);
 		}
@@ -137,11 +155,11 @@ public:
 	{
 		switch (k)
 		{
-			case FRKey::RIGHT:
-				m_Platform->MoveRight();
-				break;
 			case FRKey::LEFT:
-				m_Platform->MoveLeft();
+				m_Platform->MoveLeft(m_ElapsedTime);
+				break;
+			case FRKey::RIGHT:
+				m_Platform->MoveRight(m_ElapsedTime);
 				break;
 			default:
 				break;
@@ -171,6 +189,10 @@ public:
 protected:
 	unsigned m_WindowWidth;
 	unsigned m_WindowHeight;
+
+	unsigned int m_StartTimePoint;
+	unsigned int m_EndTimePoint;
+	float m_ElapsedTime;
 
 	std::unique_ptr<Platform> m_Platform;
 

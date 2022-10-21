@@ -7,8 +7,8 @@ class Platform
 public:
     Platform(const char* Path);
     void Draw();
-    void MoveRight();
-    void MoveLeft();
+    void MoveRight(float ElapsedTime);
+    void MoveLeft(float ElapsedTime);
 
     ~Platform();
 

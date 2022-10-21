@@ -1,6 +1,8 @@
 #define _WINDOWS
 #include "Platform.h"
 #include "Framework.h"
+#include <iostream>
+
 
 Platform::Platform(const char* Path)
 {
@@ -15,20 +17,20 @@ Platform::Platform(const char* Path)
 }
 
 void Platform::Draw()
-{   
+{  
     drawSprite(m_PlatformSprite, m_PlatformPosX, m_PlatformPosY);
 }
 
-void Platform::MoveRight()
+void Platform::MoveRight(float ElapsedTime)
 {
     if (m_PlatformPosX < m_ScreenWidth - m_PlatformSpriteWidth)
-        m_PlatformPosX += m_ScreenWidth / 130;
+        m_PlatformPosX += (m_ScreenWidth / 600) * ElapsedTime;
 }
 
-void Platform::MoveLeft()
+void Platform::MoveLeft(float ElapsedTime)
 {
     if (m_PlatformPosX > 0)
-        m_PlatformPosX -= m_ScreenWidth / 130;
+        m_PlatformPosX -= (m_ScreenWidth / 600) * ElapsedTime;
 }
 
 Platform::~Platform()
