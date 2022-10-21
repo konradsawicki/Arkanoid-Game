@@ -42,7 +42,6 @@ public:
 			m_WallElements.push_back(std::make_unique<WallElement>("data/29-Breakout-Tiles.png", 
 				m_NumberOfWallElementsWidth, m_NumberOfWallElementsHeight));
 		}
-		// if (y == 0 || x == 0 || x == NumberOfWallElementsWidth - 1)
 	}
 
 	virtual void InitMouse()
@@ -90,30 +89,32 @@ public:
 	virtual void DrawWallElements()
 	{
 		int counter = 0;
-		int x_start = m_WindowWidth / 11;
-		int y_start = 0;
-		int y1 = 0;
-		int y2 = 0;
-		int x = m_WindowWidth / 11;
+									// -6 because of minus 6 elements and +2 because of plus 2 elements from height from both sides
+		x_Start = (m_WindowWidth - (m_NumberOfWallElementsWidth - 6 + 2) * m_WallElements[0]->GetWallElementSize().width) / 2;
+		y_Start = 0;
+		int y1 = y_Start;
+		int y2 = y_Start;
+		int x = x_Start;
 		for (auto& e : m_WallElements)
 		{	
 			if (counter < m_NumberOfWallElementsHeight)
 			{
-				e->Draw(x_start, y1);
+				e->Draw(x_Start, y1);
 				y1 += e->GetWallElementSize().height;
 				counter++;
 			}
 			else if (counter >= m_NumberOfWallElementsHeight && counter < m_NumberOfWallElementsHeight + m_NumberOfWallElementsWidth - 6)
 			{
-				e->Draw(x + e->GetWallElementSize().width, y_start);
+				e->Draw(x + e->GetWallElementSize().width, y_Start);
 				x += e->GetWallElementSize().width;
 				counter++;
 			}
 			else if (counter >= m_NumberOfWallElementsHeight + m_NumberOfWallElementsWidth - 6)
 			{
-				e->Draw(x_start + e->GetWallElementSize().width + (m_NumberOfWallElementsWidth - 6) * e->GetWallElementSize().width, y2);
+				e->Draw(m_WindowWidth - x_Start - e->GetWallElementSize().width, y2);
 				y2 += e->GetWallElementSize().height;
 				counter++;
+				//x_Start + e->GetWallElementSize().width + (m_NumberOfWallElementsWidth - 6) * e->GetWallElementSize().width
 			}
 		}
 	}
@@ -212,10 +213,10 @@ public:
 		switch (k)
 		{
 			case FRKey::LEFT:
-				m_Platform->MoveLeft(m_ElapsedTime);
+				m_Platform->MoveLeft(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_Start);
 				break;
 			case FRKey::RIGHT:
-				m_Platform->MoveRight(m_ElapsedTime);
+				m_Platform->MoveRight(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_Start);
 				break;
 			default:
 				break;
@@ -257,6 +258,8 @@ protected:
 	std::vector<std::unique_ptr<WallElement>> m_WallElements;
 	unsigned int m_NumberOfWallElementsWidth;
 	unsigned int m_NumberOfWallElementsHeight;
+	int x_Start;
+	int y_Start;
 
 	Sprite* m_BackgroundSprite;
 };
@@ -266,7 +269,9 @@ std::smatch GetWindowSize(std::string WindowSize)
 	std::regex Pattern("([0-9]+)[x]([0-9]+)");
 	std::smatch Size;
 	if (!std::regex_match(WindowSize, Size, Pattern))
+	{
 		std::cout << "Wrong Window Size! Example:   ./game.exe -window 800x600\n";
+	}
 	return Size;
 }
 
@@ -275,7 +280,13 @@ int main(int argc, char* argv[])
 	if (argc == 3 && strcmp(argv[1], "-window") == 0)
 	{
 		auto WindowSize = GetWindowSize(argv[2]);
-		return run(new MyFramework(stoi(WindowSize[0]), stoi(WindowSize[1])));
+		if (stoi(WindowSize[0]) >= 600)
+			return run(new MyFramework(stoi(WindowSize[0]), stoi(WindowSize[1])));
+		else
+		{
+			std::cout << "Minimum window width is 600!\n";
+			return 0;
+		}
 	}
 	else
 		return run(new MyFramework);

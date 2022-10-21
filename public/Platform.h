@@ -1,14 +1,15 @@
 #pragma once
 
 class Sprite;
+class WallElement;
 
 class Platform
 {
 public:
     Platform(const char* Path);
     void Draw();
-    void MoveRight(float ElapsedTime);
-    void MoveLeft(float ElapsedTime);
+    void MoveRight(float ElapsedTime, int ElementWidth, int x_Start);
+    void MoveLeft(float ElapsedTime, int ElementWidth, int x_Start);
 
     ~Platform();
 
