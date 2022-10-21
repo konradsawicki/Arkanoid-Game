@@ -1,10 +1,10 @@
 .PHONY: all
-all: game
+all: Arkanoid
 
-game: game.o Platform.o Mouse.o
-	g++ -o game $^ -L. -lFrameworkRelease_x64
+Arkanoid: Game.o Platform.o Mouse.o Wall.o
+	g++ -o Arkanoid $^ -L. -lFrameworkRelease_x64
 
-game.o: game.cpp
+Game.o: Game.cpp
 	g++ -c -Ipublic $<
 
 %.o: private/%.cpp public/%.h
@@ -12,5 +12,5 @@ game.o: game.cpp
 
 .PHONY: clean
 clean:
-	rm -f *.o game
+	rm -f *.o Arkanoid.exe
 	

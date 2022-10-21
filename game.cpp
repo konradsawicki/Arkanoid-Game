@@ -1,4 +1,7 @@
 
+// Created by: Konrad Sawicki
+// https://github.com/konradsawicki/Arkanoid-Game
+
 #define _WINDOWS
 #include "Framework.h"
 #include "Platform.h"
@@ -40,8 +43,15 @@ public:
 		showCursor(false);
 	}
 
+	virtual void InitBackground()
+	{
+		m_BackgroundSprite = createSprite("data/Background_space.png");
+		setSpriteSize(m_BackgroundSprite, m_WindowWidth, m_WindowHeight);
+	}
+
 	virtual bool Init() override
 	{	
+		InitBackground();
 		InitPlatform();
 		InitMouse();
 		return true;
@@ -54,12 +64,12 @@ public:
 
 	virtual bool Tick() override
 	{
-        drawTestBackground();
+		DrawBackground();
 		UpdateMousePosition();
-		m_Platform->Draw(100, 100);
-		if (m_MouseAppeared)
-			m_Mouse->Draw(m_MousePosition.x, m_MousePosition.y);
-		
+		CheckIfKeyPressed();
+		m_Platform->Draw();
+		onMouseMove(p.x, p.y, m_MousePosition.x, m_MousePosition.y);
+
 		return false;
 	}
 
@@ -102,7 +112,8 @@ public:
 
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
 	{
-		
+		if (m_MouseAppeared)
+			m_Mouse->Draw(xrelative, yrelative);
 	}
 
 	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) override
@@ -110,9 +121,31 @@ public:
 
 	}
 
+	virtual void CheckIfKeyPressed()
+	{
+		if (GetAsyncKeyState(VK_RIGHT))
+		{
+			onKeyPressed(FRKey::RIGHT);
+		}
+		else if (GetAsyncKeyState(VK_LEFT))
+		{
+			onKeyPressed(FRKey::LEFT);
+		}
+	}
+
 	virtual void onKeyPressed(FRKey k) override
 	{
-
+		switch (k)
+		{
+			case FRKey::RIGHT:
+				m_Platform->MoveRight();
+				break;
+			case FRKey::LEFT:
+				m_Platform->MoveLeft();
+				break;
+			default:
+				break;
+		}
 	}
 
 	virtual void onKeyReleased(FRKey k) override
@@ -123,6 +156,11 @@ public:
 	virtual const char* GetTitle() override
 	{
 		return "Arcanoid";
+	}
+
+	virtual void DrawBackground()
+	{
+		drawSprite(m_BackgroundSprite, 0, 0);
 	}
 
 	~MyFramework()
@@ -142,6 +180,8 @@ protected:
 	bool m_MouseAppeared = false;
 	HWND m_hWnd;
 	std::unique_ptr<Mouse> m_Mouse;
+
+	Sprite* m_BackgroundSprite;
 };
 
 std::smatch GetWindowSize(std::string WindowSize)
