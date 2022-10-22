@@ -18,9 +18,14 @@ void WallElement::Draw(int x, int y)
     drawSprite(m_WallElementSprite, x, y);
 }
 
-pair<int> WallElement::GetWallElementSize()
+wallelement_pair<int> WallElement::GetWallElementSize()
 {
     int width, height;
     getSpriteSize(m_WallElementSprite, width, height);
     return {width, height};
+}
+
+WallElement::~WallElement()
+{
+    destroySprite(m_WallElementSprite);
 }

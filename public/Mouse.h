@@ -7,6 +7,7 @@ class Mouse
 public:
     Mouse(const char* Path);
     void Draw(int x, int y);
+    ~Mouse();
 
 protected: 
     Sprite* m_MouseSprite;

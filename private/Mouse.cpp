@@ -18,3 +18,8 @@ void Mouse::Draw(int x, int y)
     drawSprite(m_MouseSprite, x - m_MouseSpriteWidth / 2, y - m_MouseSpriteHeight / 2);
 }
 
+Mouse::~Mouse()
+{
+    destroySprite(m_MouseSprite);
+}
+

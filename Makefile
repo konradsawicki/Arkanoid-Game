@@ -1,11 +1,11 @@
 .PHONY: all
 all: Arkanoid
 
-Arkanoid: Game.o Platform.o Mouse.o WallElement.o
+Arkanoid: Game.o Platform.o Mouse.o WallElement.o Block.o Health.o
 	g++ -o Arkanoid $^ -L. -lFrameworkRelease_x64
 
 Game.o: Game.cpp
-	g++ -c -Ipublic $<
+	g++ -c -Ipublic Game.cpp
 
 %.o: private/%.cpp public/%.h
 	g++ -c -Ipublic -I. $<
