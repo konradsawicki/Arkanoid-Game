@@ -10,9 +10,11 @@
 #include "WallElement.h"
 #include "Block.h"
 #include "Health.h"
+#include "Ball.h"
 #include <regex>
 #include <Windows.h>
 #include <queue>
+#include <thread>
 #include <string>
 #include <iostream>
 
@@ -23,6 +25,12 @@ struct pair
 	T width, height;
 };
 
+template <typename T>
+struct coords
+{
+	T x, y;
+};
+
 class MyFramework : public Framework 
 {
 public:
@@ -30,7 +38,7 @@ public:
 	MyFramework(unsigned WindowWidth = 1024, unsigned WindowHeight = 768)
 		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
 			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23),
-				m_HealthNumber(6)
+				m_HealthNumber(3), m_KeyPressed(false), m_ClickNumber(0)
 	{
 	}
 
@@ -157,11 +165,12 @@ public:
 	virtual void InitMouse()
 	{
 		m_Mouse = std::make_unique<Mouse>("data/59-Breakout-Tiles.png");
-
-		LPCTSTR lpWindowTitle = GetTitle();
-		m_hWnd = FindWindow(NULL, lpWindowTitle);
-
 		showCursor(false);
+	}
+
+	virtual void InitBall()
+	{
+		m_Ball = std::make_unique<Ball>("data/62-Breakout-Tiles.png");
 	}
 
 	virtual void InitBackground()
@@ -185,6 +194,7 @@ public:
 		InitHealth();
 		InitMouse();
 		InitBlockLevels();
+		InitBall();
 		return true;
 	}
 
@@ -268,25 +278,32 @@ public:
 	}
 
 	virtual void DrawPlatform()
-	{
+	{	
 		m_Platform->Draw();
+	}
+
+	virtual void DrawBall()
+	{
+		m_Ball->Draw(m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y - m_Ball->GetBallRadius());
+	}
+
+	virtual void DrawMouse()
+	{
+		m_Mouse->Draw(m_MousePosition.x, m_MousePosition.y);
 	}
 
 	virtual bool Tick() override
 	{	
 		UpdateElapsedTime();
-		UpdateMousePosition();
-
-		CheckIfKeyPressed();
+		UpdatePlatformPosition();
 
 		DrawBackground();
 		DrawBlockLevel();
 		DrawWallElements();
 		DrawPlatform();
 		DrawHealth();
-		
-
-		onMouseMove(p.x, p.y, m_MousePosition.x, m_MousePosition.y);
+		DrawBall();
+		DrawMouse();
 
 		return false;
 	}
@@ -300,85 +317,112 @@ public:
 
 	virtual void UpdateMousePosition()
 	{
-		GetCursorPos(&p);
-		ScreenToClient(m_hWnd, &p);
-		if (p.x < 0 && !m_BlockMousePos)
-		{
-			m_BlockMousePos = true;
-			m_MousePosition.y = p.y;
-			m_MousePosition.x = 0;
-		}
-		else if (p.x > m_WindowWidth && !m_BlockMousePos)
-		{
-			m_BlockMousePos = true;
-			m_MousePosition.y = p.y;
-			m_MousePosition.x = m_WindowWidth;
-		}
+		// GetCursorPos(&p);
+		// ScreenToClient(m_hWnd, &p);
+		// m_MousePosition = p;
+		// if (p.x < 0 && !m_BlockMousePos)
+		// {
+		// 	m_BlockMousePos = true;
+		// 	m_MousePosition.y = p.y;
+		// 	m_MousePosition.x = 0;
+		// }
+		// else if (p.x > m_WindowWidth && !m_BlockMousePos)
+		// {
+		// 	m_BlockMousePos = true;
+		// 	m_MousePosition.y = p.y;
+		// 	m_MousePosition.x = m_WindowWidth;
+		// }
 
-		if (p.y < 0 && !m_BlockMousePos)
+		// if (p.y < 0 && !m_BlockMousePos)
+		// {
+		// 	m_BlockMousePos = true;
+		// 	m_MousePosition.x = p.x;
+		// 	m_MousePosition.y = 0;
+		// }
+		// else if (p.y > m_WindowHeight && !m_BlockMousePos)
+		// {
+		// 	m_BlockMousePos = true;
+		// 	m_MousePosition.x = p.x;
+		// 	m_MousePosition.y = m_WindowHeight;
+		// }
+		// else if (p.x > 0 && p.x <= m_WindowWidth && p.y > 0 && p.y <= m_WindowHeight)
+		// {
+		// 	m_BlockMousePos = false;
+		// 	m_MouseAppeared = true;
+		// 	m_MousePosition = p;
+		// }
+	}
+
+	virtual void UpdateBallPosition()
+	{
+		
+	}
+
+	virtual void UpdatePlatformPosition()
+	{
+		if (m_KeyPressed)
 		{
-			m_BlockMousePos = true;
-			m_MousePosition.x = p.x;
-			m_MousePosition.y = 0;
-		}
-		else if (p.y > m_WindowHeight && !m_BlockMousePos)
-		{
-			m_BlockMousePos = true;
-			m_MousePosition.x = p.x;
-			m_MousePosition.y = m_WindowHeight;
-		}
-		else if (p.x > 0 && p.x <= m_WindowWidth && p.y > 0 && p.y <= m_WindowHeight)
-		{
-			m_BlockMousePos = false;
-			m_MouseAppeared = true;
-			m_MousePosition = p;
+			switch (m_CurrentKey)
+			{
+				case FRKey::LEFT:
+					m_Platform->MoveLeft(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
+					break;
+				case FRKey::RIGHT:
+					m_Platform->MoveRight(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
+					if (m_BlockLevels.size() > 1)
+						m_BlockLevels.pop();
+					break;
+				default:
+					break;
+			}
 		}
 	}
 
-	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
+	virtual void CalculateUnitVector(int x1, int y1, int x2, int y2)
 	{
-		if (m_MouseAppeared)
-			m_Mouse->Draw(xrelative, yrelative);
+
+	}
+
+	virtual void CalculateDotProduct(int x1, int y1, int x2, int y2)
+	{
+
+	}
+
+	virtual void CalculateDistance(int x1, int y1, int x2, int y2)
+	{
+
+	}
+
+	virtual void ShootBall()
+	{
+		std::cout << "Fire in the hole!\n";
+	}
+
+	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
+	{	
+		m_MousePosition.x = x;
+		m_MousePosition.y = y;
 	}
 
 	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) override
 	{
-
-	}
-
-	virtual void CheckIfKeyPressed()
-	{
-		if (GetAsyncKeyState(VK_RIGHT) && GetAsyncKeyState(VK_LEFT));
-		else if (GetAsyncKeyState(VK_RIGHT))
+		m_ClickNumber++;
+		if (m_ClickNumber != 0 && m_ClickNumber % 2 == 0)
 		{
-			onKeyPressed(FRKey::RIGHT);
+			ShootBall();
 		}
-		else if (GetAsyncKeyState(VK_LEFT))
-		{
-			onKeyPressed(FRKey::LEFT);
-		}
+			
 	}
 
 	virtual void onKeyPressed(FRKey k) override
 	{
-		switch (k)
-		{
-			case FRKey::LEFT:
-				m_Platform->MoveLeft(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
-				break;
-			case FRKey::RIGHT:
-				m_Platform->MoveRight(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
-				if (m_BlockLevels.size() > 1)
-					m_BlockLevels.pop();
-				break;
-			default:
-				break;
-		}
+		m_CurrentKey = k;
+		m_KeyPressed = true;
 	}
 
 	virtual void onKeyReleased(FRKey k) override
 	{
-
+		m_KeyPressed = false;
 	}
 	
 	virtual const char* GetTitle() override
@@ -403,14 +447,14 @@ protected:
 
 	// Platform
 	std::unique_ptr<Platform> m_Platform;
+	FRKey m_CurrentKey;
+	bool m_KeyPressed;
 
 	// Mouse
 	POINT p;
-	POINT m_MousePosition;
-	bool m_BlockMousePos = true;
-	bool m_MouseAppeared = false;
-	HWND m_hWnd;
+	coords<int> m_MousePosition;
 	std::unique_ptr<Mouse> m_Mouse;
+	unsigned int m_ClickNumber;
 
 	// Walls
 	std::vector<std::unique_ptr<WallElement>> m_WallElements;
@@ -430,6 +474,9 @@ protected:
 	// Levels
 	std::queue<std::vector<std::unique_ptr<Block>>> m_BlockLevels;
 	pair<int> m_BlockSize;
+
+	// Ball
+	std::unique_ptr<Ball> m_Ball;
 
 	// Background
 	Sprite* m_BackgroundSprite;

@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 class Sprite;
 
@@ -21,6 +22,13 @@ struct BlockType
     const char* PathHit;
 };
 
+struct BlockFrameSegment
+{
+    int start_x, start_y;
+    int end_x, end_y;
+    int radius = 3;
+};
+
 class Block
 {
 public:
@@ -36,6 +44,7 @@ public:
 protected:
     void UpdateSpriteLook();
 
+    
     int m_WindowWidth, m_WindowHeight;
     Sprite* m_BlockSprite;
     const char* m_PathHit;
@@ -45,4 +54,6 @@ protected:
     int m_PosY;
 
     DURABILITY m_BlockDurability;
+    std::vector<BlockFrameSegment> m_BlockFrame;
+    
 };
