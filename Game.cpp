@@ -13,6 +13,7 @@
 #include "Ball.h"
 #include <regex>
 #include <Windows.h>
+#include <math.h>
 #include <queue>
 #include <thread>
 #include <string>
@@ -38,7 +39,7 @@ public:
 	MyFramework(unsigned WindowWidth = 1024, unsigned WindowHeight = 768)
 		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
 			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23),
-				m_HealthNumber(3), m_KeyPressed(false), m_ClickNumber(0)
+				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false)
 	{
 	}
 
@@ -170,7 +171,7 @@ public:
 
 	virtual void InitBall()
 	{
-		m_Ball = std::make_unique<Ball>("data/62-Breakout-Tiles.png");
+		m_Ball = std::make_unique<Ball>("data/62-Breakout-Tiles.png", m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y);
 	}
 
 	virtual void InitBackground()
@@ -284,7 +285,7 @@ public:
 
 	virtual void DrawBall()
 	{
-		m_Ball->Draw(m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y - m_Ball->GetBallRadius());
+		m_Ball->Draw(m_ElapsedTime);
 	}
 
 	virtual void DrawMouse()
@@ -296,6 +297,7 @@ public:
 	{	
 		UpdateElapsedTime();
 		UpdatePlatformPosition();
+		UpdateBallPosition();
 
 		DrawBackground();
 		DrawBlockLevel();
@@ -315,47 +317,10 @@ public:
 		m_StartTimePoint = m_EndTimePoint;
 	}
 
-	virtual void UpdateMousePosition()
-	{
-		// GetCursorPos(&p);
-		// ScreenToClient(m_hWnd, &p);
-		// m_MousePosition = p;
-		// if (p.x < 0 && !m_BlockMousePos)
-		// {
-		// 	m_BlockMousePos = true;
-		// 	m_MousePosition.y = p.y;
-		// 	m_MousePosition.x = 0;
-		// }
-		// else if (p.x > m_WindowWidth && !m_BlockMousePos)
-		// {
-		// 	m_BlockMousePos = true;
-		// 	m_MousePosition.y = p.y;
-		// 	m_MousePosition.x = m_WindowWidth;
-		// }
-
-		// if (p.y < 0 && !m_BlockMousePos)
-		// {
-		// 	m_BlockMousePos = true;
-		// 	m_MousePosition.x = p.x;
-		// 	m_MousePosition.y = 0;
-		// }
-		// else if (p.y > m_WindowHeight && !m_BlockMousePos)
-		// {
-		// 	m_BlockMousePos = true;
-		// 	m_MousePosition.x = p.x;
-		// 	m_MousePosition.y = m_WindowHeight;
-		// }
-		// else if (p.x > 0 && p.x <= m_WindowWidth && p.y > 0 && p.y <= m_WindowHeight)
-		// {
-		// 	m_BlockMousePos = false;
-		// 	m_MouseAppeared = true;
-		// 	m_MousePosition = p;
-		// }
-	}
-
 	virtual void UpdateBallPosition()
-	{
-		
+	{	
+		if (!m_GameActive)
+			m_Ball->SetBallPosition(m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y - m_Ball->GetBallRadius());
 	}
 
 	virtual void UpdatePlatformPosition()
@@ -378,24 +343,32 @@ public:
 		}
 	}
 
-	virtual void CalculateUnitVector(int x1, int y1, int x2, int y2)
-	{
-
-	}
-
 	virtual void CalculateDotProduct(int x1, int y1, int x2, int y2)
 	{
 
 	}
 
-	virtual void CalculateDistance(int x1, int y1, int x2, int y2)
+	virtual float CalculateDistance(int x1, int y1, int x2, int y2)
 	{
-
+		return sqrtf((m_MousePosition.x - m_Ball->GetBallPosition().x) * 
+					(m_MousePosition.x - m_Ball->GetBallPosition().x) +
+					(m_MousePosition.y - m_Ball->GetBallPosition().y) *
+					(m_MousePosition.y - m_Ball->GetBallPosition().y));
 	}
 
 	virtual void ShootBall()
 	{
-		std::cout << "Fire in the hole!\n";
+		float v_x = (float)m_MousePosition.x - m_Ball->GetBallPosition().x;
+		float v_y = (float)m_MousePosition.y - m_Ball->GetBallPosition().y;
+		v_x /= CalculateDistance(m_MousePosition.x, m_MousePosition.y,
+									m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+
+		v_y /= CalculateDistance(m_MousePosition.x, m_MousePosition.y,
+									m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+		
+		std::cout << v_x << " " << v_y << std::endl;
+		std::cout << m_ElapsedTime << std::endl;
+		m_Ball->SetVelocity(v_x, v_y);
 	}
 
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
@@ -406,23 +379,26 @@ public:
 
 	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) override
 	{
-		m_ClickNumber++;
-		if (m_ClickNumber != 0 && m_ClickNumber % 2 == 0)
+		if (!m_GameActive)
 		{
+			std::cout << "Shoot\n";
 			ShootBall();
+			m_GameActive = true;
 		}
-			
 	}
 
 	virtual void onKeyPressed(FRKey k) override
 	{
-		m_CurrentKey = k;
 		m_KeyPressed = true;
+		m_CurrentKey = k;
+		std::cout << "onKeyPressed\n";
+		
 	}
 
 	virtual void onKeyReleased(FRKey k) override
 	{
 		m_KeyPressed = false;
+		std::cout << "onKeyReleased\n";
 	}
 	
 	virtual const char* GetTitle() override
@@ -448,13 +424,13 @@ protected:
 	// Platform
 	std::unique_ptr<Platform> m_Platform;
 	FRKey m_CurrentKey;
+	FRKey m_PreviousKey;
 	bool m_KeyPressed;
 
 	// Mouse
 	POINT p;
 	coords<int> m_MousePosition;
 	std::unique_ptr<Mouse> m_Mouse;
-	unsigned int m_ClickNumber;
 
 	// Walls
 	std::vector<std::unique_ptr<WallElement>> m_WallElements;
@@ -477,6 +453,7 @@ protected:
 
 	// Ball
 	std::unique_ptr<Ball> m_Ball;
+	bool m_GameActive;
 
 	// Background
 	Sprite* m_BackgroundSprite;

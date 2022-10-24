@@ -11,12 +11,13 @@ struct ball_pair
 class Ball
 {
 public:
-    Ball(const char* Path);
-    void Draw(int x, int y);
-    ball_pair<unsigned int> GetBallPosition();
+    Ball(const char* Path, int x, int y);
+    void Draw(float ElapsedTime);
+    ball_pair<float> GetBallPosition();
+    void SetBallPosition(unsigned int x, unsigned int y);
     unsigned int GetBallRadius();
-    void LowerVelocity();
-    void IncreaseVelocity();
+    ball_pair<float> GetVelocity();
+    void SetVelocity(float x, float y);
     ~Ball();
 
 protected:
@@ -29,10 +30,11 @@ protected:
     unsigned int m_BallSpriteHeight;
     unsigned int m_BallRadius;
 
-    unsigned int m_BallPosX;
-    unsigned int m_BallPosY;
+    float m_BallPosX;
+    float m_BallPosY;
+    float count1, count2;
 
-    int m_BallVelocityX;
-    int m_BallVelocityY;
+    float m_BallVelocityX;
+    float m_BallVelocityY;
 
 };
