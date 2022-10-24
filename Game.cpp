@@ -4,6 +4,7 @@
 // https://github.com/konradsawicki/Arkanoid-Game
 
 #define _WINDOWS
+#define PI 3.1415
 #include "Framework.h"
 #include "Platform.h"
 #include "Mouse.h"
@@ -14,7 +15,7 @@
 #include <regex>
 #include <Windows.h>
 #include <math.h>
-#include <set>
+#include <functional>
 #include <queue>
 #include <thread>
 #include <string>
@@ -32,6 +33,12 @@ struct coords
 {
 	T x, y;
 };
+
+
+float Distance(int x1, int y1, int x2, int y2)
+{
+	return sqrtf((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
 
 class MyFramework : public Framework 
 {
@@ -378,37 +385,70 @@ public:
 
 	virtual coords<float> FindIntersectionPoints(BlockFrameSegment BF_Segment)
 	{
-		if (BF_Segment.start_y == BF_Segment.end_y)
+		for (float i : {1.0f, -1.0f}) // making offset in first iteration + and in second -
 		{
-			float offset = (float)m_Ball->GetBallRadius() * sinf(atanf(m_Ball->GetPathCoefficients().a));
-			float p_y = (float)BF_Segment.start_y;
-			float p_x = (p_y - m_Ball->GetPathCoefficients().b) / m_Ball->GetPathCoefficients().a;
-			count++;
-			if (p_x >= (float)BF_Segment.start_x && p_x <= (float)BF_Segment.end_x)
+			float offset = (float)m_Ball->GetBallRadius() * sinf(PI / 2 - atanf(m_Ball->GetPathCoefficients().a)) * i;
+			//std::cout << "offset=" << offset << std::endl;
+			if (BF_Segment.start_y == BF_Segment.end_y)
 			{
-				m_IntersectionPoints.push_back({p_x, p_y});
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+				float p_y = (float)BF_Segment.start_y;
+				float p_x = (p_y - m_Ball->GetPathCoefficients().b + offset) / m_Ball->GetPathCoefficients().a;
+				count++;
+				if (p_x >= (float)BF_Segment.start_x && p_x <= (float)BF_Segment.end_x)
+				{
+					if (std::none_of(m_IntersectionPoints.begin(), m_IntersectionPoints.end(),
+					[&](const auto& kv){
+							return (kv.first == BF_Segment.block_id);
+					}))
+					{
+						std::cout << "id=" << BF_Segment.block_id << std::endl;
+						std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+						m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
+					}
+					
+				}
+				else if (p_x >= (float)BF_Segment.end_x && p_x <= (float)BF_Segment.start_x)
+				{	
+					if (std::none_of(m_IntersectionPoints.begin(), m_IntersectionPoints.end(),
+					[&](const auto& kv){
+							return (kv.first == BF_Segment.block_id);
+					}))
+					{
+						std::cout << "id=" << BF_Segment.block_id << std::endl;
+						std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+						m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
+					}
+				}
 			}
-			else if (p_x >= (float)BF_Segment.end_x && p_x <= (float)BF_Segment.start_x)
+			else if (BF_Segment.start_x == BF_Segment.end_x)
 			{
-				m_IntersectionPoints.push_back({p_x, p_y});
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
-			}
-		}
-		else if (BF_Segment.start_x == BF_Segment.end_x)
-		{
-			float p_x = (float)BF_Segment.start_x;
-			float p_y = m_Ball->GetPathCoefficients().a * p_x + m_Ball->GetPathCoefficients().b;
-			count++;
-			if (p_y >= (float)BF_Segment.start_y && p_y <= (float)BF_Segment.end_y)
-			{
-				m_IntersectionPoints.push_back({p_x, p_y});
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
-			}
-			else if (p_y >= (float)BF_Segment.end_y && p_y <= (float)BF_Segment.start_y)
-			{
-				m_IntersectionPoints.push_back({p_x, p_y});
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+				float p_x = (float)BF_Segment.start_x;
+				float p_y = m_Ball->GetPathCoefficients().a * p_x + m_Ball->GetPathCoefficients().b + offset;
+				count++;
+				if (p_y >= (float)BF_Segment.start_y && p_y <= (float)BF_Segment.end_y)
+				{
+					if (std::none_of(m_IntersectionPoints.begin(), m_IntersectionPoints.end(),
+					[&](const auto& kv){
+							return (kv.first == BF_Segment.block_id);
+					}))
+					{
+						std::cout << "id=" << BF_Segment.block_id << std::endl;
+						std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+						m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
+					}
+				}
+				else if (p_y >= (float)BF_Segment.end_y && p_y <= (float)BF_Segment.start_y)
+				{
+					if (std::none_of(m_IntersectionPoints.begin(), m_IntersectionPoints.end(),
+					[&](const auto& kv){
+							return (kv.first == BF_Segment.block_id);
+					}))
+					{
+						std::cout << "id=" << BF_Segment.block_id << std::endl;
+						std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+						m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
+					}
+				}
 			}
 		}
 		return {0, 0};
@@ -419,14 +459,11 @@ public:
 		if (!m_IntersectionPoints.empty())
 		{		
 			std::sort(m_IntersectionPoints.begin(), m_IntersectionPoints.end(), 
-			[&](const auto& p1, const auto& p2)
+			[&](const auto& kv1, const auto& kv2)
 			{
-				//std::cout << p1.x << " " << p1.y << ", dist=" << Distance(p1.x, p1.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) << std::endl;
-				//std::cout << p2.x << " " << p2.y << ", dist=" << Distance(p2.x, p2.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) << std::endl;
-				//std::cout << "=============\n";
-				return Distance(p1.x, p1.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(p2.x, p2.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+				return Distance(kv1.second.x, kv1.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(kv2.second.x, kv2.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
 			});
-			m_ClosestIntersectionPointToBall = m_IntersectionPoints.front();
+			m_ClosestIntersectionPointToBall = m_IntersectionPoints.front().second;
 			//std::cout  << "m_IntersectionPoints.size()="<< m_IntersectionPoints.size() << std::endl;
 			m_IntersectionPoints.clear();
 			std::cout << m_ClosestIntersectionPointToBall.x << " " << m_ClosestIntersectionPointToBall.y << std::endl;
@@ -556,7 +593,7 @@ protected:
 	bool m_GameActive;
 
 	// Physics
-	std::vector<coords<float>> m_IntersectionPoints;
+	std::vector<std::pair<unsigned int, coords<float>>> m_IntersectionPoints;
 	coords<float> m_ClosestIntersectionPointToBall;
 	bool m_Clicked = false;
 	int count = 0;

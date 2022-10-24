@@ -3,6 +3,8 @@
 #include "Framework.h"
 #include <iostream>
 
+unsigned int Block::m_ID = 0;
+
 Block::Block(BlockType Block_Type, int BlockSizeWidth, int BlockSizeHeight, int PosX, int PosY)
     : m_BlockDurability(Block_Type.Durability), m_PathHit(Block_Type.PathHit), m_PosX(PosX), m_PosY(PosY)
 {
@@ -18,26 +20,32 @@ Block::Block(BlockType Block_Type, int BlockSizeWidth, int BlockSizeHeight, int 
     width1.start_y = m_PosY;
     width1.end_x = m_PosX + m_BlockSpriteWidth;
     width1.end_y = m_PosY;
+    width1.block_id = Block::m_ID;
 
     height1.start_x = width1.end_x;
     height1.start_y = width1.end_y;
     height1.end_x = height1.start_x;
     height1.end_y = height1.start_y + m_BlockSpriteHeight;
+    height1.block_id = Block::m_ID;
 
     width2.start_x = height1.end_x;
     width2.start_y = height1.end_y;
     width2.end_x = width2.start_x - m_BlockSpriteWidth;
     width2.end_y = width2.start_y;
+    width2.block_id = Block::m_ID;
 
     height2.start_x = width2.end_x;
     height2.start_y = width2.end_y;
     height2.end_x = height2.start_x;
     height2.end_y = height2.start_y - m_BlockSpriteHeight;
+    height2.block_id = Block::m_ID;
     
     m_BlockFrame.width1 = width1;
     m_BlockFrame.height1 = height1;
     m_BlockFrame.width2 = width2;
     m_BlockFrame.height2 = height2;
+
+    Block::m_ID++;
 }
 
 void Block::Draw()
@@ -60,6 +68,11 @@ DURABILITY Block::GetBlockDurability()
 BlockFrame Block::GetBlockFrame()
 {
     return m_BlockFrame;
+}
+
+unsigned int Block::GetId()
+{
+    return m_ID;
 }
 
 void Block::LowerDurability()

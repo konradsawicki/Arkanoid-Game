@@ -27,6 +27,7 @@ struct BlockFrameSegment
     int start_x, start_y;
     int end_x, end_y;
     int radius = 3;
+    unsigned int block_id;
 };
 
 struct BlockFrame
@@ -42,8 +43,10 @@ public:
     block_pair<int> GetBlockSize();
     DURABILITY GetBlockDurability();
     BlockFrame GetBlockFrame();
+    unsigned int GetId();
     void LowerDurability();
-
+    
+    static unsigned int m_ID;
 
     ~Block();
 
@@ -58,6 +61,8 @@ protected:
     unsigned int m_BlockSpriteHeight;
     int m_PosX;
     int m_PosY;
+
+    
 
     DURABILITY m_BlockDurability;
     BlockFrame m_BlockFrame;
