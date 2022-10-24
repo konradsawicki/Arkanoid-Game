@@ -29,8 +29,10 @@ void Ball::Draw(float ElapsedTime)
 {
     m_BallPosX += m_BallVelocityX * ElapsedTime;
     m_BallPosY += m_BallVelocityY * ElapsedTime;
-
+    UpdatePathEquation();
     drawSprite(m_BallSprite, m_BallPosX, m_BallPosY);
+    //std::cout << "GetPathCoefficients().a=" << GetPathCoefficients().a << std::endl;
+    //std::cout << "GetPathCoefficients().b=" << GetPathCoefficients().b << std::endl;
 }
 
 void Ball::SetBallPosition(unsigned int x, unsigned int y)
@@ -40,8 +42,8 @@ void Ball::SetBallPosition(unsigned int x, unsigned int y)
 
 ball_pair<float> Ball::GetBallPosition()
 {
-    float m_BallCenterPosX = m_BallPosX + m_BallSpriteWidth / 2;
-    float m_BallCenterPosY = m_BallPosY + m_BallSpriteHeight / 2;
+    m_BallCenterPosX = m_BallPosX + m_BallSpriteWidth / 2;
+    m_BallCenterPosY = m_BallPosY + m_BallSpriteHeight / 2;
     return {m_BallCenterPosX, m_BallCenterPosY};
 }
 
@@ -59,6 +61,26 @@ void Ball::SetVelocity(float v_x, float v_y)
 {
     m_BallVelocityX = v_x;
     m_BallVelocityY = v_y;
+}
+
+equation<float> Ball::GetPathCoefficients()
+{
+    return {a, b};
+}
+
+void Ball::UpdatePathEquation()
+{
+    float x_eq = m_BallCenterPosX;
+    float y_eq = m_BallCenterPosY;
+
+    if (m_BallVelocityX != 0.0f)
+        a = m_BallVelocityY / m_BallVelocityX;
+    else
+        a = 0;
+    b = y_eq - a * x_eq;
+
+    //std::cout << "a=" << a << std::endl;
+    //std::cout << "b=" << b << std::endl;
 }
 
 Ball::~Ball()

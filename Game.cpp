@@ -14,6 +14,7 @@
 #include <regex>
 #include <Windows.h>
 #include <math.h>
+#include <set>
 #include <queue>
 #include <thread>
 #include <string>
@@ -39,7 +40,8 @@ public:
 	MyFramework(unsigned WindowWidth = 1024, unsigned WindowHeight = 768)
 		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
 			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23),
-				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false)
+				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false),
+					m_ClosestIntersectionPointToBall{0.0f, 0.0f}
 	{
 	}
 
@@ -137,6 +139,25 @@ public:
 			}
 		}
 		m_BlockLevels.push(std::move(Level));
+		std::cout << "width1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_x << std::endl;
+		std::cout << "width1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_y << std::endl;
+		std::cout << "width1_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.end_x << std::endl;
+		std::cout << "width1_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.end_y << std::endl;
+		std::cout << "===========================\n";
+		std::cout << "height1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.start_x << std::endl;
+		std::cout << "height1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.start_y << std::endl;
+		std::cout << "height1_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.end_x << std::endl;
+		std::cout << "height1_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.end_y << std::endl;
+		std::cout << "===========================\n";
+		std::cout << "width2_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.start_x << std::endl;
+		std::cout << "width2_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.start_y << std::endl;
+		std::cout << "width2_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.end_x << std::endl;
+		std::cout << "width2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.end_y << std::endl;
+		std::cout << "===========================\n";
+		std::cout << "height2_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.start_x << std::endl;
+		std::cout << "height2_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.start_y << std::endl;
+		std::cout << "height2_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_x << std::endl;
+		std::cout << "height2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_y << std::endl;
 		Level.clear();
 
 		// Level 2
@@ -166,7 +187,7 @@ public:
 	virtual void InitMouse()
 	{
 		m_Mouse = std::make_unique<Mouse>("data/59-Breakout-Tiles.png");
-		showCursor(false);
+		showCursor(true);
 	}
 
 	virtual void InitBall()
@@ -307,6 +328,8 @@ public:
 		DrawBall();
 		DrawMouse();
 
+		CheckCollision();
+
 		return false;
 	}
 
@@ -343,31 +366,99 @@ public:
 		}
 	}
 
-	virtual void CalculateDotProduct(int x1, int y1, int x2, int y2)
+	virtual void DotProduct(int x1, int y1, int x2, int y2)
 	{
 
 	}
 
-	virtual float CalculateDistance(int x1, int y1, int x2, int y2)
+	virtual float Distance(int x1, int y1, int x2, int y2)
 	{
-		return sqrtf((m_MousePosition.x - m_Ball->GetBallPosition().x) * 
-					(m_MousePosition.x - m_Ball->GetBallPosition().x) +
-					(m_MousePosition.y - m_Ball->GetBallPosition().y) *
-					(m_MousePosition.y - m_Ball->GetBallPosition().y));
+		return sqrtf((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+	}
+
+	virtual coords<float> FindIntersectionPoints(BlockFrameSegment BF_Segment)
+	{
+		if (BF_Segment.start_y == BF_Segment.end_y)
+		{
+			float offset = (float)m_Ball->GetBallRadius() * sinf(atanf(m_Ball->GetPathCoefficients().a));
+			float p_y = (float)BF_Segment.start_y;
+			float p_x = (p_y - m_Ball->GetPathCoefficients().b) / m_Ball->GetPathCoefficients().a;
+			count++;
+			if (p_x >= (float)BF_Segment.start_x && p_x <= (float)BF_Segment.end_x)
+			{
+				m_IntersectionPoints.push_back({p_x, p_y});
+				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+			}
+			else if (p_x >= (float)BF_Segment.end_x && p_x <= (float)BF_Segment.start_x)
+			{
+				m_IntersectionPoints.push_back({p_x, p_y});
+				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+			}
+		}
+		else if (BF_Segment.start_x == BF_Segment.end_x)
+		{
+			float p_x = (float)BF_Segment.start_x;
+			float p_y = m_Ball->GetPathCoefficients().a * p_x + m_Ball->GetPathCoefficients().b;
+			count++;
+			if (p_y >= (float)BF_Segment.start_y && p_y <= (float)BF_Segment.end_y)
+			{
+				m_IntersectionPoints.push_back({p_x, p_y});
+				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+			}
+			else if (p_y >= (float)BF_Segment.end_y && p_y <= (float)BF_Segment.start_y)
+			{
+				m_IntersectionPoints.push_back({p_x, p_y});
+				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+			}
+		}
+		return {0, 0};
+	}
+
+	virtual void FindClosestIntersectionPointToBall()
+	{
+		if (!m_IntersectionPoints.empty())
+		{		
+			std::sort(m_IntersectionPoints.begin(), m_IntersectionPoints.end(), 
+			[&](const auto& p1, const auto& p2)
+			{
+				//std::cout << p1.x << " " << p1.y << ", dist=" << Distance(p1.x, p1.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) << std::endl;
+				//std::cout << p2.x << " " << p2.y << ", dist=" << Distance(p2.x, p2.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) << std::endl;
+				//std::cout << "=============\n";
+				return Distance(p1.x, p1.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(p2.x, p2.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+			});
+			m_ClosestIntersectionPointToBall = m_IntersectionPoints.front();
+			//std::cout  << "m_IntersectionPoints.size()="<< m_IntersectionPoints.size() << std::endl;
+			m_IntersectionPoints.clear();
+			std::cout << m_ClosestIntersectionPointToBall.x << " " << m_ClosestIntersectionPointToBall.y << std::endl;
+		}
+	}
+
+	virtual void CheckCollision()
+	{
+		if (m_Clicked)
+		{
+			for (auto& e : m_BlockLevels.front())
+			{
+				FindIntersectionPoints(e->GetBlockFrame().width1);
+				FindIntersectionPoints(e->GetBlockFrame().height1);
+				FindIntersectionPoints(e->GetBlockFrame().width2);
+				FindIntersectionPoints(e->GetBlockFrame().height2);
+			}
+			FindClosestIntersectionPointToBall();
+			m_Clicked = false;
+		}
 	}
 
 	virtual void ShootBall()
 	{
 		float v_x = (float)m_MousePosition.x - m_Ball->GetBallPosition().x;
 		float v_y = (float)m_MousePosition.y - m_Ball->GetBallPosition().y;
-		v_x /= CalculateDistance(m_MousePosition.x, m_MousePosition.y,
+		v_x /= Distance(m_MousePosition.x, m_MousePosition.y,
 									m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
 
-		v_y /= CalculateDistance(m_MousePosition.x, m_MousePosition.y,
+		v_y /= Distance(m_MousePosition.x, m_MousePosition.y,
 									m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
-		
-		std::cout << v_x << " " << v_y << std::endl;
-		std::cout << m_ElapsedTime << std::endl;
+
 		m_Ball->SetVelocity(v_x, v_y);
 	}
 
@@ -375,6 +466,9 @@ public:
 	{	
 		m_MousePosition.x = x;
 		m_MousePosition.y = y;
+		if (!m_GameActive)
+			std::cout << m_MousePosition.x << " | " << m_MousePosition.y << std::endl;
+		
 	}
 
 	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) override
@@ -384,6 +478,7 @@ public:
 			std::cout << "Shoot\n";
 			ShootBall();
 			m_GameActive = true;
+			m_Clicked = true;
 		}
 	}
 
@@ -401,6 +496,11 @@ public:
 		std::cout << "onKeyReleased\n";
 	}
 	
+	virtual void RestartGame()
+	{
+
+	}
+
 	virtual const char* GetTitle() override
 	{
 		return "Arcanoid";
@@ -454,6 +554,12 @@ protected:
 	// Ball
 	std::unique_ptr<Ball> m_Ball;
 	bool m_GameActive;
+
+	// Physics
+	std::vector<coords<float>> m_IntersectionPoints;
+	coords<float> m_ClosestIntersectionPointToBall;
+	bool m_Clicked = false;
+	int count = 0;
 
 	// Background
 	Sprite* m_BackgroundSprite;

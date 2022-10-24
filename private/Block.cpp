@@ -34,10 +34,10 @@ Block::Block(BlockType Block_Type, int BlockSizeWidth, int BlockSizeHeight, int 
     height2.end_x = height2.start_x;
     height2.end_y = height2.start_y - m_BlockSpriteHeight;
     
-    m_BlockFrame.push_back(width1);
-    m_BlockFrame.push_back(height1);
-    m_BlockFrame.push_back(width2);
-    m_BlockFrame.push_back(height2);
+    m_BlockFrame.width1 = width1;
+    m_BlockFrame.height1 = height1;
+    m_BlockFrame.width2 = width2;
+    m_BlockFrame.height2 = height2;
 }
 
 void Block::Draw()
@@ -55,6 +55,11 @@ block_pair<int> Block::GetBlockSize()
 DURABILITY Block::GetBlockDurability()
 {
     return m_BlockDurability;
+}
+
+BlockFrame Block::GetBlockFrame()
+{
+    return m_BlockFrame;
 }
 
 void Block::LowerDurability()

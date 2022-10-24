@@ -29,6 +29,11 @@ struct BlockFrameSegment
     int radius = 3;
 };
 
+struct BlockFrame
+{
+     BlockFrameSegment width1, height1, width2, height2;
+};
+
 class Block
 {
 public:
@@ -36,6 +41,7 @@ public:
     void Draw();
     block_pair<int> GetBlockSize();
     DURABILITY GetBlockDurability();
+    BlockFrame GetBlockFrame();
     void LowerDurability();
 
 
@@ -54,6 +60,6 @@ protected:
     int m_PosY;
 
     DURABILITY m_BlockDurability;
-    std::vector<BlockFrameSegment> m_BlockFrame;
+    BlockFrame m_BlockFrame;
     
 };

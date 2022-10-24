@@ -8,6 +8,12 @@ struct ball_pair
     T x, y;
 };
 
+template <typename T>
+struct equation
+{
+    T a, b;
+};
+
 class Ball
 {
 public:
@@ -17,11 +23,13 @@ public:
     void SetBallPosition(unsigned int x, unsigned int y);
     unsigned int GetBallRadius();
     ball_pair<float> GetVelocity();
+    equation<float> GetPathCoefficients();
     void SetVelocity(float x, float y);
     ~Ball();
 
 protected:
     void SetBallCenterPosition(int x, int y);
+    void UpdatePathEquation();
 
     int m_WindowWidth, m_WindowHeight;
 
@@ -32,7 +40,12 @@ protected:
 
     float m_BallPosX;
     float m_BallPosY;
-    float count1, count2;
+    float m_BallCenterPosX;
+    float m_BallCenterPosY;
+
+    // y = ax + b
+    float a; 
+    float b;
 
     float m_BallVelocityX;
     float m_BallVelocityY;
