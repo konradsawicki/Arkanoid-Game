@@ -6,14 +6,14 @@
 #include <iostream>
 
 Ball::Ball(const char* Path, int x, int y)
-      :  m_BallVelocityX(0), m_BallVelocityY(0)
+      :  m_BallVelocityX(0), m_BallVelocityY(0), m_ElapsedTime(1)
 {
     m_BallSprite = createSprite(Path);
     getScreenSize(m_WindowWidth, m_WindowHeight);
     m_BallSpriteWidth = m_WindowWidth / 40;
-    m_BallSpriteHeight = m_WindowHeight / 40;
+    m_BallSpriteHeight = m_BallSpriteWidth;
     setSpriteSize(m_BallSprite, m_BallSpriteWidth, m_BallSpriteHeight);
-    m_BallRadius = m_BallSpriteWidth / 2 - 2;
+    m_BallRadius = m_BallSpriteWidth / 2;
 
     SetBallCenterPosition(x, y);
     m_BallPosY -= m_BallRadius;
@@ -27,8 +27,9 @@ void Ball::SetBallCenterPosition(int x, int y)
 
 void Ball::Draw(float ElapsedTime)
 {
-    m_BallPosX += m_BallVelocityX * ElapsedTime;
-    m_BallPosY += m_BallVelocityY * ElapsedTime;
+    m_ElapsedTime = ElapsedTime;
+    m_BallPosX += m_BallVelocityX * m_ElapsedTime;
+    m_BallPosY += m_BallVelocityY * m_ElapsedTime;
     UpdatePathEquation();
     drawSprite(m_BallSprite, m_BallPosX, m_BallPosY);
     //std::cout << "GetPathCoefficients().a=" << GetPathCoefficients().a << std::endl;
@@ -54,7 +55,7 @@ unsigned int Ball::GetBallRadius()
 
 ball_pair<float> Ball::GetVelocity()
 {
-    return {m_BallVelocityX, m_BallVelocityY};
+    return {m_BallVelocityX * m_ElapsedTime, m_BallVelocityY * m_ElapsedTime};
 }
 
 void Ball::SetVelocity(float v_x, float v_y)

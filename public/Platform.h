@@ -1,4 +1,5 @@
 #pragma once
+#include "Block.h"
 
 
 class Sprite;
@@ -6,9 +7,7 @@ class WallElement;
 
 struct PlatformFrame
 {
-    int start_x, start_y;
-    int end_x, end_y;
-    unsigned int radius;
+    FrameSegment width;
 };
 
 template <typename T>
@@ -24,6 +23,8 @@ public:
     void Draw();
     void MoveRight(float ElapsedTime, int ElementWidth, int x_Start);
     void MoveLeft(float ElapsedTime, int ElementWidth, int x_Start);
+    PlatformFrame GetPlatfromFrame();
+    void SetPlatformId(unsigned int id);
     platform_pair<unsigned int> GetPlatformCenter();
     ~Platform();
 

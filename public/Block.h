@@ -1,5 +1,5 @@
 #pragma once
-#include <vector>
+
 
 class Sprite;
 
@@ -22,17 +22,17 @@ struct BlockType
     const char* PathHit;
 };
 
-struct BlockFrameSegment
+struct FrameSegment
 {
     int start_x, start_y;
     int end_x, end_y;
-    int radius = 3;
-    unsigned int block_id;
+    int radius = 4;
+    unsigned int frame_id;
 };
 
 struct BlockFrame
 {
-     BlockFrameSegment width1, height1, width2, height2;
+     FrameSegment width1, height1, width2, height2;
 };
 
 class Block

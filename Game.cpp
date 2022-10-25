@@ -34,6 +34,11 @@ struct coords
 	T x, y;
 };
 
+struct MapFrame
+{
+	FrameSegment width, height1, height2;
+};
+
 class MyFramework : public Framework 
 {
 public:
@@ -41,7 +46,8 @@ public:
 	MyFramework(unsigned WindowWidth = 1024, unsigned WindowHeight = 768)
 		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
 			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23),
-				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false)
+				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false),
+					m_PossibleCollisionWithPlatform(false), x_Start(0), y_Start(0)
 	{
 	}
 
@@ -55,6 +61,7 @@ public:
 	virtual void InitPlatform()
 	{
 		m_Platform = std::make_unique<Platform>("data/48-Breakout-Tiles.png");
+		m_Platform->SetPlatformId(m_BlockLevels.front().size() + 1);
 	}
 
 	virtual void InitWallElements()
@@ -68,6 +75,37 @@ public:
 		}
 		m_WallElementSize.width = m_WallElements[0]->GetWallElementSize().width;
 		m_WallElementSize.height = m_WallElements[0]->GetWallElementSize().height;
+
+		// Init map frame
+		m_MapFrame.width.start_x = x_Start + m_WallElementSize.width;
+		m_MapFrame.width.start_y = m_WallElementSize.height;
+		m_MapFrame.width.end_x = m_MapFrame.width.start_x + m_NumberOfWallElementsWidthReal * m_WallElementSize.width;
+		m_MapFrame.width.end_y = m_MapFrame.width.start_y;
+
+		m_MapFrame.height1.start_x = m_MapFrame.width.end_x;
+		m_MapFrame.height1.start_y = m_MapFrame.width.end_y;
+		m_MapFrame.height1.end_x = m_MapFrame.height1.start_x;
+		m_MapFrame.height1.end_y = m_MapFrame.height1.start_y + m_NumberOfWallElementsHeightReal * m_WallElementSize.height;
+
+		m_MapFrame.height2.start_x = m_MapFrame.width.start_x;
+		m_MapFrame.height2.start_y = m_MapFrame.height1.end_y;
+		m_MapFrame.height2.end_x = m_MapFrame.height2.start_x;
+		m_MapFrame.height2.end_y = m_MapFrame.width.start_y;
+
+		// std::cout << "m_MapFrame.width.start_x="<< m_MapFrame.width.start_x << std::endl;
+		// std::cout <<"m_MapFrame.width.start_y="<< m_MapFrame.width.start_y<< std::endl;
+		// std::cout <<"m_MapFrame.width.end_x="<< m_MapFrame.width.end_x<< std::endl;
+		// std::cout <<"m_MapFrame.width.end_y="<< m_MapFrame.width.end_y<< std::endl;
+		// std::cout << "===================" << std::endl;
+		// std::cout <<"m_MapFrame.height1.start_x="<< m_MapFrame.height1.start_x<< std::endl;
+		// std::cout <<"m_MapFrame.height1.start_y="<< m_MapFrame.height1.start_y<< std::endl;
+		// std::cout <<"m_MapFrame.height1.end_x="<< m_MapFrame.height1.end_x<< std::endl;
+		// std::cout <<"m_MapFrame.height1.end_y="<< m_MapFrame.height1.end_y<< std::endl;
+		// std::cout << "===================" << std::endl;
+		// std::cout <<"m_MapFrame.height2.start_x="<< m_MapFrame.height2.start_x << std::endl;
+		// std::cout <<"m_MapFrame.height2.start_y="<< m_MapFrame.height2.start_y<< std::endl;
+		// std::cout <<"m_MapFrame.height2.end_x="<< m_MapFrame.height2.end_x<< std::endl;
+		// std::cout <<"m_MapFrame.height2.end_y="<< m_MapFrame.height2.end_y<< std::endl;
 	}
 
 	virtual void InitHealth()
@@ -139,25 +177,30 @@ public:
 			}
 		}
 		m_BlockLevels.push(std::move(Level));
-		std::cout << "width1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_x << std::endl;
-		std::cout << "width1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_y << std::endl;
-		std::cout << "width1_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.end_x << std::endl;
-		std::cout << "width1_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.end_y << std::endl;
-		std::cout << "===========================\n";
-		std::cout << "height1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.start_x << std::endl;
-		std::cout << "height1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.start_y << std::endl;
-		std::cout << "height1_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.end_x << std::endl;
-		std::cout << "height1_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.end_y << std::endl;
-		std::cout << "===========================\n";
-		std::cout << "width2_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.start_x << std::endl;
-		std::cout << "width2_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.start_y << std::endl;
-		std::cout << "width2_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.end_x << std::endl;
-		std::cout << "width2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.end_y << std::endl;
-		std::cout << "===========================\n";
-		std::cout << "height2_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.start_x << std::endl;
-		std::cout << "height2_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.start_y << std::endl;
-		std::cout << "height2_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_x << std::endl;
-		std::cout << "height2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_y << std::endl;
+
+		m_MapFrame.width.frame_id = m_BlockLevels.front().size();
+		m_MapFrame.height1.frame_id = m_BlockLevels.front().size();
+		m_MapFrame.height2.frame_id = m_BlockLevels.front().size();
+
+		// std::cout << "width1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_x << std::endl;
+		// std::cout << "width1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_y << std::endl;
+		// std::cout << "width1_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.end_x << std::endl;
+		// std::cout << "width1_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.end_y << std::endl;
+		// std::cout << "===========================\n";
+		// std::cout << "height1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.start_x << std::endl;
+		// std::cout << "height1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.start_y << std::endl;
+		// std::cout << "height1_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.end_x << std::endl;
+		// std::cout << "height1_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height1.end_y << std::endl;
+		// std::cout << "===========================\n";
+		// std::cout << "width2_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.start_x << std::endl;
+		// std::cout << "width2_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.start_y << std::endl;
+		// std::cout << "width2_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.end_x << std::endl;
+		// std::cout << "width2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width2.end_y << std::endl;
+		// std::cout << "===========================\n";
+		// std::cout << "height2_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.start_x << std::endl;
+		// std::cout << "height2_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.start_y << std::endl;
+		// std::cout << "height2_end_x=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_x << std::endl;
+		// std::cout << "height2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_y << std::endl;
 		Level.clear();
 
 		// Level 2
@@ -212,11 +255,12 @@ public:
 		InitTimePoints();
 		InitBackground();
 		InitWallElements();
+		InitBlockLevels();
 		InitPlatform();
 		InitHealth();
 		InitMouse();
-		InitBlockLevels();
 		InitBall();
+
 		return true;
 	}
 
@@ -235,15 +279,14 @@ public:
 		int counter = 0;
 											// +2 because of plus 2 elements from height from both sides
 		x_WallOffset = (m_WindowWidth - (m_NumberOfWallElementsWidthReal + 2) * m_WallElementSize.width);
-		y_Start = 0;
 		int y1 = y_Start;
 		int y2 = y_Start;
-		int x = 0; // x = x_WallOffset;
+		int x = x_Start; // x = x_WallOffset;
 		for (auto& e : m_WallElements)
 		{	
 			if (counter < m_NumberOfWallElementsHeightReal)
 			{
-				e->Draw(0, y1);
+				e->Draw(x_Start, y1);
 				y1 += m_WallElementSize.height;
 				counter++;
 			}
@@ -353,10 +396,10 @@ public:
 			switch (m_CurrentKey)
 			{
 				case FRKey::LEFT:
-					m_Platform->MoveLeft(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
+					m_Platform->MoveLeft(m_ElapsedTime, x_Start + m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
 					break;
 				case FRKey::RIGHT:
-					m_Platform->MoveRight(m_ElapsedTime, m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
+					m_Platform->MoveRight(m_ElapsedTime, x_Start + m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
 					// if (m_BlockLevels.size() > 1)
 					// 	m_BlockLevels.pop();
 					break;
@@ -376,66 +419,139 @@ public:
 		return sqrtf((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	}
 
-	virtual coords<float> FindIntersectionPoints(BlockFrameSegment BF_Segment, int i)
+	virtual coords<float> FindStaticIntersectionPoints(FrameSegment F_Segment, int i)
 	{
 		float radius = m_Ball->GetBallRadius();
 		float a = m_Ball->GetPathCoefficients().a;
 		float b = m_Ball->GetPathCoefficients().b;
-		float offset_x = radius * cosf(PI / 2 - atanf(a)) * (float)i;
-		float offset_y = radius * sinf(PI / 2 - atanf(a)) * (float)i;
 
-		if (BF_Segment.start_y == BF_Segment.end_y)
+		float ball_x = m_Ball->GetBallPosition().x;
+		float ball_y = m_Ball->GetBallPosition().y;
+
+		float ball_vel_x = m_Ball->GetVelocity().x;
+		float ball_vel_y = m_Ball->GetVelocity().y;
+
+		float offset_x = radius * cosf(PI / 2 + atanf(a)) * (float)i;
+		float offset_y = radius * sinf(PI / 2 + atanf(a)) * (float)i;
+
+		float b_p = (ball_y + offset_y) - a * (ball_x + offset_x); // b coeff for parallel linear function
+
+
+		if (F_Segment.start_y == F_Segment.end_y)
 		{
-			float p_y = (float)BF_Segment.start_y;
-			float p_x = ((p_y - offset_y - b) / a) + offset_x;
-			if (p_x >= (float)BF_Segment.start_x && p_x <= (float)BF_Segment.end_x)
-			{
-				std::cout << "id=" << BF_Segment.block_id << std::endl;
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
-				m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
-				
-			}
-			else if (p_x >= (float)BF_Segment.end_x && p_x <= (float)BF_Segment.start_x)
-			{	
-				std::cout << "id=" << BF_Segment.block_id << std::endl;
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
-				m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
+			float p_y = (float)F_Segment.start_y;
+			float p_x = (p_y - b_p) / a;
+			if (Distance(p_x, p_y, ball_x + offset_x, ball_y + offset_y) > Distance(p_x, p_y,  ball_x + offset_x + ball_vel_x, ball_y + offset_y + ball_vel_y))
+			{			
+				if (p_x >= (float)F_Segment.start_x && p_x <= (float)F_Segment.end_x)
+				{
+					std::cout << "id=" << F_Segment.frame_id << std::endl;
+					std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+					m_IntersectionPoints.push_back({F_Segment.frame_id, {p_x, p_y}});
+					
+				}
+				else if (p_x >= (float)F_Segment.end_x && p_x <= (float)F_Segment.start_x)
+				{	
+					std::cout << "id=" << F_Segment.frame_id << std::endl;
+					std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+					m_IntersectionPoints.push_back({F_Segment.frame_id, {p_x, p_y}});
+				}
 			}
 		}
-		else if (BF_Segment.start_x == BF_Segment.end_x)
+		else if (F_Segment.start_x == F_Segment.end_x)
 		{
-			float p_x = (float)BF_Segment.start_x;
-			float p_y = a * (p_x - offset_x) + b + offset_y;
-			if (p_y >= (float)BF_Segment.start_y && p_y <= (float)BF_Segment.end_y)
+			float p_x = (float)F_Segment.start_x;
+			float p_y = a * p_x + b_p;
+			if (Distance(p_x, p_y, ball_x + offset_x, ball_y + offset_y) > Distance(p_x, p_y,  ball_x + offset_x + ball_vel_x, ball_y + offset_y + ball_vel_y))
 			{
-				std::cout << "id=" << BF_Segment.block_id << std::endl;
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
-				m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
-			}
-			else if (p_y >= (float)BF_Segment.end_y && p_y <= (float)BF_Segment.start_y)
-			{
-				std::cout << "id=" << BF_Segment.block_id << std::endl;
-				std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
-				m_IntersectionPoints.push_back({BF_Segment.block_id, {p_x, p_y}});
+				if (p_y >= (float)F_Segment.start_y && p_y <= (float)F_Segment.end_y)
+				{
+					std::cout << "id=" << F_Segment.frame_id << std::endl;
+					std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+					m_IntersectionPoints.push_back({F_Segment.frame_id, {p_x, p_y}});
+				}
+				else if (p_y >= (float)F_Segment.end_y && p_y <= (float)F_Segment.start_y)
+				{
+					std::cout << "id=" << F_Segment.frame_id << std::endl;
+					std::cout << "p_x=" << p_x << " p_y=" << p_y << std::endl;
+					m_IntersectionPoints.push_back({F_Segment.frame_id, {p_x, p_y}});
+				}
 			}
 		}
 		return {0, 0};
 	}
 
-	virtual void FindClosestFramesId(int i)
+	virtual void CheckIfPlatformCollides(int i)
+	{
+		float radius = m_Ball->GetBallRadius();
+		float a = m_Ball->GetPathCoefficients().a;
+		float b = m_Ball->GetPathCoefficients().b;
+
+		float ball_x = m_Ball->GetBallPosition().x;
+		float ball_y = m_Ball->GetBallPosition().y;
+
+		float ball_vel_x = m_Ball->GetVelocity().x;
+		float ball_vel_y = m_Ball->GetVelocity().y;
+
+		float offset_x = radius * cosf(PI / 2 - atanf(a)) * (float)i;
+		float offset_y = radius * sinf(PI / 2 - atanf(a)) * (float)i;
+
+		float b_p = ball_y + offset_y - a * (ball_x + offset_x);
+
+		float p_y = (float)m_Platform->GetPlatformCenter().y;
+		float p_x = (p_y - b_p) / a;
+
+		if (Distance(p_x, p_y, ball_x + offset_x, ball_y + offset_y) > Distance(p_x, p_y,  ball_x + offset_x + ball_vel_x, ball_y + offset_y + ball_vel_y))
+		{
+			if (p_x >= (float)(x_Start + m_WallElementSize.width) && p_x <= (float)(x_Start + m_WallElementSize.width + m_NumberOfWallElementsWidthReal * m_WallElementSize.width))
+				m_PossibleCollisionWithPlatform = true;
+		}
+	}
+
+	virtual void FindClosestPointForStaticInstance()
 	{
 		if (!m_IntersectionPoints.empty())
-		{		
-			std::sort(m_IntersectionPoints.begin(), m_IntersectionPoints.end(), 
-			[&](const auto& kv1, const auto& kv2)
+		{	
+			if (m_IntersectionPoints.size() > 1)
 			{
-				return Distance(kv1.second.x, kv1.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(kv2.second.x, kv2.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
-			});
-			if (i == 1)
-				m_ClosestFramesId.first = m_IntersectionPoints.front().first;
-			else if (i == -1)
-				m_ClosestFramesId.second = m_IntersectionPoints.front().first;
+				std::sort(m_IntersectionPoints.begin(), m_IntersectionPoints.end(), 
+				[&](const auto& kv1, const auto& kv2)
+				{
+					return Distance(kv1.second.x, kv1.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(kv2.second.x, kv2.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+				});
+			}
+			m_ClosestPointsForStaticInstance.push_back(m_IntersectionPoints.front());
+
 			m_IntersectionPoints.clear();
+		}
+	}
+
+	virtual void FindClosestStaticFramesId()
+	{
+		
+		if (!m_ClosestPointsForStaticInstance.empty())
+		{	
+			if (m_ClosestPointsForStaticInstance.size() > 2)
+			{
+				std::sort(m_ClosestPointsForStaticInstance.begin(), m_ClosestPointsForStaticInstance.end(), 
+				[&](const auto& kv1, const auto& kv2)
+				{
+					return Distance(kv1.second.x, kv1.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(kv2.second.x, kv2.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+				});
+			}
+			m_ClosestStaticFramesId.first = m_ClosestPointsForStaticInstance[0].first;
+			m_ClosestStaticFramesId.second = m_ClosestPointsForStaticInstance[1].first;
+			m_ClosestPointsForStaticInstance.clear();
+
+			std::cout << "-----------\n";
+			std::cout << "id1=" << m_ClosestStaticFramesId.first <<  std::endl;
+			std::cout << "id1_x=" << m_ClosestPointsForStaticInstance[0].second.x << " ";
+			std::cout << "id1_y=" << m_ClosestPointsForStaticInstance[0].second.y << std::endl;
+			std::cout << "-----------\n";
+			std::cout << "id2=" <<m_ClosestStaticFramesId.second << std::endl;
+			std::cout << "id2_x=" << m_ClosestPointsForStaticInstance[1].second.x << " ";
+			std::cout << "id2_y=" << m_ClosestPointsForStaticInstance[1].second.y << std::endl;
+			std::cout << "-----------\n";
 		}
 	}
 
@@ -443,24 +559,44 @@ public:
 	{
 		if (m_Clicked)
 		{
+			//Collision with blocks
 			for (auto& e : m_BlockLevels.front())
 			{
-				FindIntersectionPoints(e->GetBlockFrame().width1, 1);
-				FindIntersectionPoints(e->GetBlockFrame().height1, 1);
-				FindIntersectionPoints(e->GetBlockFrame().width2, 1);
-				FindIntersectionPoints(e->GetBlockFrame().height2, 1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().width1, 1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().height1, 1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().width2, 1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().height2, 1);
 			}
-			FindClosestFramesId(1);
+			FindClosestPointForStaticInstance();
+			std::cout << "------------\n";
 			for (auto& e : m_BlockLevels.front())
 			{
-				FindIntersectionPoints(e->GetBlockFrame().width1, -1);
-				FindIntersectionPoints(e->GetBlockFrame().height1, -1);
-				FindIntersectionPoints(e->GetBlockFrame().width2, -1);
-				FindIntersectionPoints(e->GetBlockFrame().height2, -1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().width1, -1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().height1, -1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().width2, -1);
+				FindStaticIntersectionPoints(e->GetBlockFrame().height2, -1);
 			}
-			FindClosestFramesId(-1);
+			FindClosestPointForStaticInstance();
+
+			// Collision with platform
+			CheckIfPlatformCollides(1);
+			CheckIfPlatformCollides(-1);
+
+			// Collision with walls
+			FindStaticIntersectionPoints(m_MapFrame.width, 1);
+			FindStaticIntersectionPoints(m_MapFrame.height1, 1);
+			FindStaticIntersectionPoints(m_MapFrame.height2, 1);
+			FindClosestPointForStaticInstance();
+
+			FindStaticIntersectionPoints(m_MapFrame.width, -1);
+			FindStaticIntersectionPoints(m_MapFrame.height1, -1);
+			FindStaticIntersectionPoints(m_MapFrame.height2, -1);
+			FindClosestPointForStaticInstance();
+
+			// Find overall two closest static frames
+			FindClosestStaticFramesId();
+
 			m_Clicked = false;
-			std::cout << "id1, id2=" << m_ClosestFramesId.first << ", " << m_ClosestFramesId.second << std::endl;
 		}
 	}
 
@@ -475,6 +611,11 @@ public:
 									m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
 
 		m_Ball->SetVelocity(v_x, v_y);
+	}
+
+	virtual void CalculateTangentPoint()
+	{
+
 	}
 
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
@@ -555,7 +696,9 @@ protected:
 	unsigned int m_NumberOfWallElementsHeightReal;
 	int x_WallOffset;
 	int y_Start;
+	int x_Start;
 	pair<int> m_WallElementSize;
+	MapFrame m_MapFrame;
 
 	// Health
 	std::vector<std::unique_ptr<Health>> m_Health;
@@ -571,8 +714,10 @@ protected:
 	bool m_GameActive;
 
 	// Physics
+	bool m_PossibleCollisionWithPlatform;
 	std::vector<std::pair<unsigned int, coords<float>>> m_IntersectionPoints;
-	std::pair<unsigned int, unsigned int> m_ClosestFramesId;
+	std::vector<std::pair<unsigned int, coords<float>>> m_ClosestPointsForStaticInstance;
+	std::pair<unsigned int, unsigned int> m_ClosestStaticFramesId;
 	bool m_Clicked = false;
 	int count = 0;
 

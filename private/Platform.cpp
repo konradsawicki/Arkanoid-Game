@@ -14,11 +14,11 @@ Platform::Platform(const char* Path)
     m_PlatformPosX = m_WindowWidth / 2 - m_PlatformSpriteWidth / 2;
     m_PlatformPosY = m_WindowHeight - m_WindowHeight / 7;
 
-    m_PlatformFrame.radius = m_PlatformSpriteHeight / 2;
-    m_PlatformFrame.start_x = m_PlatformPosX + m_PlatformFrame.radius;
-    m_PlatformFrame.start_y = m_PlatformPosY + m_PlatformFrame.radius;
-    m_PlatformFrame.end_x = m_PlatformPosX + m_PlatformSpriteWidth - m_PlatformFrame.radius;
-    m_PlatformFrame.end_y = m_PlatformFrame.start_y;
+    m_PlatformFrame.width.radius = m_PlatformSpriteHeight / 2;
+    m_PlatformFrame.width.start_x = m_PlatformPosX + m_PlatformFrame.width.radius;
+    m_PlatformFrame.width.start_y = m_PlatformPosY + m_PlatformFrame.width.radius;
+    m_PlatformFrame.width.end_x = m_PlatformPosX + m_PlatformSpriteWidth - m_PlatformFrame.width.radius;
+    m_PlatformFrame.width.end_y = m_PlatformFrame.width.start_y;
 }
 
 void Platform::Draw()
@@ -31,8 +31,8 @@ void Platform::MoveRight(float ElapsedTime, int ElementWidth, int x_Start)
     if (m_PlatformPosX < m_WindowWidth - x_Start - ElementWidth - m_PlatformSpriteWidth)
     {
         m_PlatformPosX += (m_WindowWidth / 600) * ElapsedTime;
-        m_PlatformFrame.start_x += (m_WindowWidth / 600) * ElapsedTime;
-        m_PlatformFrame.end_x += (m_WindowWidth / 600) * ElapsedTime;
+        m_PlatformFrame.width.start_x += (m_WindowWidth / 600) * ElapsedTime;
+        m_PlatformFrame.width.end_x += (m_WindowWidth / 600) * ElapsedTime;
     }
 }
 
@@ -41,9 +41,19 @@ void Platform::MoveLeft(float ElapsedTime, int ElementWidth, int x_Start)
     if (m_PlatformPosX > ElementWidth)
     {
         m_PlatformPosX -= (m_WindowWidth / 600) * ElapsedTime;
-        m_PlatformFrame.start_x -= (m_WindowWidth / 600) * ElapsedTime;
-        m_PlatformFrame.end_x -= (m_WindowWidth / 600) * ElapsedTime;
+        m_PlatformFrame.width.start_x -= (m_WindowWidth / 600) * ElapsedTime;
+        m_PlatformFrame.width.end_x -= (m_WindowWidth / 600) * ElapsedTime;
     }
+}
+
+PlatformFrame Platform::GetPlatfromFrame()
+{
+    return m_PlatformFrame;
+}
+
+void Platform::SetPlatformId(unsigned int id)
+{
+    m_PlatformFrame.width.frame_id = id;
 }
 
 platform_pair<unsigned int> Platform::GetPlatformCenter()

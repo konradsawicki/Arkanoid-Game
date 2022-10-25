@@ -24,6 +24,7 @@ public:
     unsigned int GetBallRadius();
     ball_pair<float> GetVelocity();
     equation<float> GetPathCoefficients();
+
     void SetVelocity(float x, float y);
     ~Ball();
 
@@ -49,5 +50,6 @@ protected:
 
     float m_BallVelocityX;
     float m_BallVelocityY;
+    float m_ElapsedTime;
 
 };
