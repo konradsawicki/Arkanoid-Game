@@ -22,8 +22,7 @@ blocks by deflecting the ball with the platform.
 
 #### Player
 The player can move a platform using left and right arrow keyboard buttons. Initially the 
-player can choose the angle of the ball by pressing the left mouse button (the ball should be 
-launched in the direction of the mouse cursor).
+player can choose the angle of the ball by pressing the left mouse button.
 
 #### Ball
 The ball speed is not constant. Every reflection from edges increases the speed by 10%. Speed is decreased by 10% on destroying a block. Deflecting by a platform has no impact on the speed. Minimum speed is 40% and maximum is 300% of a default speed.
