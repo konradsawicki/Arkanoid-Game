@@ -1,5 +1,6 @@
 #pragma once
-
+#include "Ability.h"
+#include <memory>
 
 class Sprite;
 
@@ -13,6 +14,12 @@ template <typename T>
 struct block_pair
 {
     T width, height;
+};
+
+template <typename T>
+struct block_coords
+{
+    T x, y;
 };
 
 struct BlockType
@@ -44,8 +51,10 @@ public:
     DURABILITY GetBlockDurability();
     BlockFrame GetBlockFrame();
     unsigned int GetId();
+    block_coords<float> GetPosition();
+    void SetId(unsigned int new_id);
     void LowerDurability();
-    
+    std::unique_ptr<Ability>* m_SettledAbility = nullptr;
     static unsigned int m_ID;
 
     ~Block();

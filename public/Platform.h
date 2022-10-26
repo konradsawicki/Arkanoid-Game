@@ -16,6 +16,12 @@ struct platform_pair
     T x, y;
 };
 
+template <typename T>
+struct platform_size
+{
+    T width, height;
+};
+
 class Platform
 {
 public:
@@ -26,6 +32,8 @@ public:
     PlatformFrame GetPlatfromFrame();
     void SetPlatformId(unsigned int id);
     platform_pair<unsigned int> GetPlatformCenter();
+    platform_size<float> GetSize();
+    platform_pair<float> GetPosition();
     ~Platform();
 
 protected:

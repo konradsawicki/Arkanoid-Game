@@ -1,9 +1,9 @@
 #define _WINDOWS
 #include "Ball.h"
 #include "Framework.h"
-#include <thread>
-#include <chrono>
+#include <math.h>
 #include <iostream>
+
 
 Ball::Ball(const char* Path, int x, int y)
       :  m_BallVelocityX(0), m_BallVelocityY(0), m_ElapsedTime(1)
@@ -28,12 +28,10 @@ void Ball::SetBallCenterPosition(int x, int y)
 void Ball::Draw(float ElapsedTime)
 {
     m_ElapsedTime = ElapsedTime;
-    m_BallPosX += m_BallVelocityX * m_ElapsedTime;
-    m_BallPosY += m_BallVelocityY * m_ElapsedTime;
+    m_BallPosX += m_BallVelocityX * m_ElapsedTime / 2;
+    m_BallPosY += m_BallVelocityY * m_ElapsedTime / 2;
     UpdatePathEquation();
     drawSprite(m_BallSprite, m_BallPosX, m_BallPosY);
-    //std::cout << "GetPathCoefficients().a=" << GetPathCoefficients().a << std::endl;
-    //std::cout << "GetPathCoefficients().b=" << GetPathCoefficients().b << std::endl;
 }
 
 void Ball::SetBallPosition(unsigned int x, unsigned int y)
@@ -53,15 +51,33 @@ unsigned int Ball::GetBallRadius()
     return m_BallRadius;
 }
 
-ball_pair<float> Ball::GetVelocity()
+ball_pair<float> Ball::GetVelocity(bool withoutElapsedTime)
 {
-    return {m_BallVelocityX * m_ElapsedTime, m_BallVelocityY * m_ElapsedTime};
+    if (withoutElapsedTime)
+        return {m_BallVelocityX, m_BallVelocityY};  
+    else
+        return {m_BallVelocityX * m_ElapsedTime, m_BallVelocityY * m_ElapsedTime};
+        
+}
+
+void Ball::SetDefaultSpeed(float speed)
+{
+    m_DefaultSpeed = speed;
 }
 
 void Ball::SetVelocity(float v_x, float v_y)
 {
-    m_BallVelocityX = v_x;
-    m_BallVelocityY = v_y;
+    float magnitude = sqrtf(v_x * v_x + v_y * v_y);
+    if (magnitude >= 0.4f * m_DefaultSpeed && magnitude <= 3.0f * m_DefaultSpeed)
+    {
+        m_BallVelocityX = v_x;
+        m_BallVelocityY = v_y;
+    }
+    else
+    {
+        m_BallVelocityX *= v_x / abs(v_x);
+        m_BallVelocityY *= v_y / abs(v_y);
+    }
 }
 
 equation<float> Ball::GetPathCoefficients()

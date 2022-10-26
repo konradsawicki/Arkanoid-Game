@@ -72,7 +72,20 @@ BlockFrame Block::GetBlockFrame()
 
 unsigned int Block::GetId()
 {
-    return m_ID;
+    return m_BlockFrame.width1.frame_id;
+}
+
+block_coords<float> Block::GetPosition()
+{
+    return {(float)m_PosX, (float)m_PosY};
+}
+
+void Block::SetId(unsigned int new_id)
+{
+    m_BlockFrame.height1.frame_id = new_id;
+    m_BlockFrame.height2.frame_id = new_id;
+    m_BlockFrame.width1.frame_id = new_id;
+    m_BlockFrame.width2.frame_id = new_id;
 }
 
 void Block::LowerDurability()
@@ -92,7 +105,9 @@ void Block::UpdateSpriteLook()
 }
 
 Block::~Block()
-{
+{   
+    if (m_SettledAbility)
+        (*m_SettledAbility)->Settle(false);
     std::cout << "Block " << m_PosX << " | " << m_PosY << std::endl;
     destroySprite(m_BlockSprite);
 }
