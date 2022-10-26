@@ -14,12 +14,10 @@
 #include "Ball.h"
 #include "Ability.h"
 #include <regex>
-#include <Windows.h>
 #include <math.h>
 #include <functional>
 #include <algorithm>
 #include <queue>
-#include <string>
 #include <iostream>
 
 /* Test Framework realization */
@@ -37,7 +35,7 @@ struct coords
 
 struct MapFrame
 {
-	FrameSegment width, height1, height2;
+	FrameSegment width1, width2, height1, height2;
 };
 
 class MyFramework : public Framework 
@@ -45,12 +43,7 @@ class MyFramework : public Framework
 public:
 
 	MyFramework(unsigned WindowWidth = 1024, unsigned WindowHeight = 768)
-		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
-			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23),
-				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false),
-					m_PossibleCollisionWithPlatform(false), x_Start(0), y_Start(0),
-						m_isVectorCalculated1(false), m_isVectorCalculated2(false),
-							m_BlockDestroyedAmount(0)
+		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight)
 	{
 	}
 
@@ -61,17 +54,35 @@ public:
 		fullscreen = false;
 	}
 
+	virtual void InitVariables()
+	{
+		m_NumberOfWallElementsWidth = 25;
+		m_NumberOfWallElementsHeight = 23;
+		m_HealthNumber = 3;
+		m_KeyPressed = false;
+		m_GameActive = false;
+		m_PossibleCollisionWithPlatform = false;
+		x_Start = 0;
+		y_Start = 0;
+		m_isVectorCalculated1 = false;
+		m_isVectorCalculated2 = false;
+		m_BlockDestroyedAmount = 0;
+		m_isAdditionalWall = false;
+	}
+
 	virtual void InitPlatform()
 	{
 		m_Platform = std::make_unique<Platform>("data/48-Breakout-Tiles.png");
 		m_Platform->SetPlatformId(m_BlockLevels.front().size() + 1);
-		m_PlatformId = m_BlockLevels.front().size() + 1;
+		m_PlatformId = m_MapFrame.height2.frame_id + 1;
 	}
 
 	virtual void InitWallElements()
 	{
+		
 		m_NumberOfWallElementsWidthReal = m_NumberOfWallElementsWidth - 6; // i don't want whole window width with Wall Elements, so i substract 6: 3 per side;
 		m_NumberOfWallElementsHeightReal = m_NumberOfWallElementsHeight + 1;
+		m_WallElements.reserve(2 * m_NumberOfWallElementsWidthReal + 2 * m_NumberOfWallElementsHeightReal + 1);
 		for (int i = 0; i < 2 * m_NumberOfWallElementsHeightReal + m_NumberOfWallElementsWidthReal; ++i) 
 		{
 			m_WallElements.push_back(std::make_unique<WallElement>("data/29-Breakout-Tiles.png", 
@@ -81,25 +92,30 @@ public:
 		m_WallElementSize.height = m_WallElements[0]->GetWallElementSize().height;
 
 		// Init map frame
-		m_MapFrame.width.start_x = x_Start + m_WallElementSize.width;
-		m_MapFrame.width.start_y = m_WallElementSize.height;
-		m_MapFrame.width.end_x = m_MapFrame.width.start_x + m_NumberOfWallElementsWidthReal * m_WallElementSize.width;
-		m_MapFrame.width.end_y = m_MapFrame.width.start_y;
+		m_MapFrame.width1.start_x = x_Start + m_WallElementSize.width;
+		m_MapFrame.width1.start_y = m_WallElementSize.height;
+		m_MapFrame.width1.end_x = m_MapFrame.width1.start_x + m_NumberOfWallElementsWidthReal * m_WallElementSize.width;
+		m_MapFrame.width1.end_y = m_MapFrame.width1.start_y;
 
-		m_MapFrame.height1.start_x = m_MapFrame.width.end_x;
-		m_MapFrame.height1.start_y = m_MapFrame.width.end_y;
+		m_MapFrame.height1.start_x = m_MapFrame.width1.end_x;
+		m_MapFrame.height1.start_y = m_MapFrame.width1.end_y;
 		m_MapFrame.height1.end_x = m_MapFrame.height1.start_x;
 		m_MapFrame.height1.end_y = m_MapFrame.height1.start_y + m_NumberOfWallElementsHeightReal * m_WallElementSize.height;
 
-		m_MapFrame.height2.start_x = m_MapFrame.width.start_x;
+		m_MapFrame.height2.start_x = m_MapFrame.width1.start_x;
 		m_MapFrame.height2.start_y = m_MapFrame.height1.end_y;
 		m_MapFrame.height2.end_x = m_MapFrame.height2.start_x;
-		m_MapFrame.height2.end_y = m_MapFrame.width.start_y;
+		m_MapFrame.height2.end_y = m_MapFrame.width1.start_y;
 
-		// std::cout << "m_MapFrame.width.start_x="<< m_MapFrame.width.start_x << std::endl;
-		// std::cout <<"m_MapFrame.width.start_y="<< m_MapFrame.width.start_y<< std::endl;
-		// std::cout <<"m_MapFrame.width.end_x="<< m_MapFrame.width.end_x<< std::endl;
-		// std::cout <<"m_MapFrame.width.end_y="<< m_MapFrame.width.end_y<< std::endl;
+		m_MapFrame.width2.start_x = m_MapFrame.height2.end_x;
+		m_MapFrame.width2.start_y = m_WindowHeight - m_WallElementSize.height;
+		m_MapFrame.width2.end_x = m_MapFrame.width1.end_x;
+		m_MapFrame.width2.end_y = m_MapFrame.width2.start_y;
+
+		//  std::cout << "m_MapFrame.width2.start_x="<< m_MapFrame.width2.start_x << std::endl;
+		//  std::cout <<"m_MapFrame.width2.start_y="<< m_MapFrame.width2.start_y<< std::endl;
+		//  std::cout <<"m_MapFrame.width2.end_x="<< m_MapFrame.width2.end_x<< std::endl;
+		//  std::cout <<"m_MapFrame.width2.end_y="<< m_MapFrame.width2.end_y<< std::endl;
 		// std::cout << "===================" << std::endl;
 		// std::cout <<"m_MapFrame.height1.start_x="<< m_MapFrame.height1.start_x<< std::endl;
 		// std::cout <<"m_MapFrame.height1.start_y="<< m_MapFrame.height1.start_y<< std::endl;
@@ -124,6 +140,7 @@ public:
 
 	virtual void InitBlockLevels()
 	{
+		Block::m_ID = 0;
 		unsigned int NumberOfBlocksWidth = 12;
 		unsigned int NumberOfBlocksHeight = 25;
 		m_BlockSize = {(int)(m_NumberOfWallElementsWidthReal * m_WallElementSize.width / NumberOfBlocksWidth), (int)(m_NumberOfWallElementsHeightReal * m_WallElementSize.height / NumberOfBlocksHeight)};
@@ -135,7 +152,6 @@ public:
 
 		auto RandomBlockType = [&]() 
 		{
-			//srand(time(nullptr)); // uncomment if you want different durability distribution each time you play
 			BlockType Block_Type;
 			int b_type = (rand() % 3) + 1;
 			if (b_type == 1)
@@ -226,9 +242,10 @@ public:
 
 		// Level 3
 		// ...
-		m_MapFrame.width.frame_id = m_BlockLevels.front().size();
-		m_MapFrame.height1.frame_id = m_BlockLevels.front().size();
-		m_MapFrame.height2.frame_id = m_BlockLevels.front().size();
+		m_MapFrame.width1.frame_id = m_BlockLevels.front().size();
+		m_MapFrame.width2.frame_id = m_BlockLevels.front().size() + 1;
+		m_MapFrame.height1.frame_id = m_BlockLevels.front().size() + 2;
+		m_MapFrame.height2.frame_id = m_BlockLevels.front().size() + 3;
 		m_MapId = m_BlockLevels.front().size();
 	}
 
@@ -257,6 +274,7 @@ public:
 
 	virtual bool Init() override
 	{	
+		InitVariables();
 		InitTimePoints();
 		InitBackground();
 		InitWallElements();
@@ -271,7 +289,7 @@ public:
 
 	virtual void Close() override
 	{
-
+		
 	}
 
 	virtual void DrawBackground()
@@ -301,10 +319,16 @@ public:
 				x += m_WallElementSize.width;
 				counter++;
 			}
-			else if (counter >= m_NumberOfWallElementsHeightReal + m_NumberOfWallElementsWidthReal)
+			else if (counter >= m_NumberOfWallElementsHeightReal + m_NumberOfWallElementsWidthReal && counter < 2 * m_NumberOfWallElementsHeightReal + m_NumberOfWallElementsWidthReal)
 			{
 				e->Draw(m_WindowWidth - x_WallOffset - m_WallElementSize.width, y2);
 				y2 += m_WallElementSize.height;
+				counter++;
+			}
+			else if (counter >= 2 * m_NumberOfWallElementsHeightReal + m_NumberOfWallElementsWidthReal && m_isAdditionalWall)
+			{
+				e->Draw(x, m_WindowHeight - m_WallElementSize.height);
+				x -= m_WallElementSize.width;
 				counter++;
 			}
 		}
@@ -389,9 +413,14 @@ public:
 		DrawBall();
 		DrawMouse();
 
-
 		CheckCollision();
+		if (m_isAdditionalWall)
+		{
+			m_Bounced = true;
+			CheckCollision();
+		}
 
+		RestartGame();
 		return false;
 	}
 
@@ -400,7 +429,6 @@ public:
 		m_EndTimePoint = getTickCount();
 		m_ElapsedTime = float(m_EndTimePoint - m_StartTimePoint);
 		m_StartTimePoint = m_EndTimePoint;
-		m_SimElapsedTime = m_ElapsedTime / (float)m_SimulationUpdates;
 		
 	}
 
@@ -451,6 +479,7 @@ public:
 	{
 		if (!m_Abilities.empty())
 		{
+			int index = -1;
 			for (auto& ability : m_Abilities)
 			{
 				float ab_lower_y = ability->GetPosition().y + ability->GetSize().height;
@@ -468,7 +497,28 @@ public:
 					ability->Settle(true);
 					ability->SetPosition(ability->GetPosition().x + (float)ability->GetSize().width / 2.0f, (*it)->GetPosition().y - ability->GetSize().height / 2);
 				}
+
+				if (ability->GetPosition().y + ability->GetSize().height >= m_Platform->GetPlatformCenter().y && 
+						ability->GetPosition().y <= m_Platform->GetPlatformCenter().y + m_Platform->GetSize().height &&
+							ability->GetPosition().x + ability->GetSize().width >= m_Platform->GetPosition().x &&
+								ability->GetPosition().x <= m_Platform->GetPosition().x + m_Platform->GetSize().width)
+				{
+					index = ability->GetId();
+					UseAbility(&ability);
+				}
 			}
+
+			if (index != -1)
+			{
+				auto it = m_Abilities.begin() + index;
+				auto it2 = m_Abilities.erase(it);
+				for (auto i = it2; i != m_Abilities.end(); i++)
+				{
+					(*i)->SetId((*i)->GetId() - 1);
+				}
+				Ability::SetGlobalId(Ability::GetGlobalId() - 1);
+			}
+
 		} 
 	}
 
@@ -601,7 +651,6 @@ public:
 				FindStaticIntersectionPoints(e->GetBlockFrame().height2, 1);
 			}
 			FindClosestPointForStaticInstance();
-			std::cout << "------------\n";
 			for (auto& e : m_BlockLevels.front())
 			{
 				FindStaticIntersectionPoints(e->GetBlockFrame().width1, -1);
@@ -612,14 +661,18 @@ public:
 			FindClosestPointForStaticInstance();
 
 			// Collision with walls
-			FindStaticIntersectionPoints(m_MapFrame.width, 1);
+			FindStaticIntersectionPoints(m_MapFrame.width1, 1);
 			FindStaticIntersectionPoints(m_MapFrame.height1, 1);
 			FindStaticIntersectionPoints(m_MapFrame.height2, 1);
+			if (m_isAdditionalWall)
+				FindStaticIntersectionPoints(m_MapFrame.width2, 1);
 			FindClosestPointForStaticInstance();
 
-			FindStaticIntersectionPoints(m_MapFrame.width, -1);
+			FindStaticIntersectionPoints(m_MapFrame.width1, -1);
 			FindStaticIntersectionPoints(m_MapFrame.height1, -1);
 			FindStaticIntersectionPoints(m_MapFrame.height2, -1);
+			if (m_isAdditionalWall)
+				FindStaticIntersectionPoints(m_MapFrame.width2, -1);
 			FindClosestPointForStaticInstance();
 
 			// Find overall two closest static frames
@@ -729,6 +782,8 @@ public:
 
 	virtual void DynamicResponseStatic(FrameSegment F_Seg, float& VectorX, float& VectorY, float& TangentPosX, float& TangentPosY, bool& isVectorCalculated, bool& isVectorCalculatedOther)
 	{
+		//std::cout << "width2_id= " << m_MapFrame.width2.frame_id << std::endl;
+		//std::cout << "id= "<< F_Seg.frame_id << std::endl;
 		float LineX1 = (float)(F_Seg.end_x - F_Seg.start_x);
 		float LineY1 = float(F_Seg.end_y - F_Seg.start_y);
 
@@ -745,7 +800,7 @@ public:
 		if (!isVectorCalculated)
 		{
 			isVectorCalculated = true;
-			TangentPosX = TangentPosition(F_Seg).x;
+			TangentPosX = TangentPosition(F_Seg).x; // kiedy leci na rog to nie jest styczny
 			TangentPosY = TangentPosition(F_Seg).y;
 			VectorX = - m_Ball->GetVelocity().x;
 			VectorY = - m_Ball->GetVelocity().y;
@@ -760,7 +815,7 @@ public:
 		// std::cout << "----VectorX * vect_x=" << VectorX * vect_x << std::endl;
 		// std::cout << "----VectorY * vect_y=" << VectorY * vect_y << std::endl;
 		//std::cout << "id=" << F_Seg.frame_id << std::endl;
-		// if direction of VectorX && vect_x is different (thus product of these two has to be < 0) and the same for VectorY and vect_y
+		// if direction of reference vector VectorX and live vector vect_x is different (thus product of these two has to be < 0) and the same for VectorY and vect_y
 		if (VectorX * vect_x < 0.0f && VectorY * vect_y < 0.0f && !m_Bounced)
 		{
 			// std::cout << "===============\n";
@@ -797,7 +852,8 @@ public:
 				HitBlock(F_Seg.frame_id);
 				std::cout << "Hit!\n";
 			}
-
+			else if (F_Seg.frame_id == m_MapFrame.width2.frame_id)
+				RemoveWall();
 
 			isVectorCalculated = false;
 			isVectorCalculatedOther = false;
@@ -842,6 +898,36 @@ public:
 		m_Abilities.back()->SetPosition(x + m_BlockSize.width / 2, y + m_BlockSize.height / 2);
 	}
 
+	virtual void UseAbility(std::unique_ptr<Ability>* ability_ptr)
+	{
+		if ((*ability_ptr)->GetType() == ABILITY_TYPE::POSITIVE)
+		{
+			AddWall();
+		}
+		else if ((*ability_ptr)->GetType() == ABILITY_TYPE::NEGATIVE)
+			m_Health.pop_back();
+	}
+
+	virtual void AddWall()
+	{
+		if (!m_isAdditionalWall)
+		{
+			m_isAdditionalWall = true;
+			for (int i = 0; i < m_NumberOfWallElementsWidthReal; ++i) 
+			{
+				m_WallElements.push_back(std::make_unique<WallElement>("data/29-Breakout-Tiles.png", 
+					m_NumberOfWallElementsWidth, m_NumberOfWallElementsHeight));
+			}
+		}
+	}
+
+	virtual void RemoveWall()
+	{
+		m_isAdditionalWall = false;
+		for (int i = 0; i < m_NumberOfWallElementsWidthReal; ++i)
+			m_WallElements.pop_back();
+	}
+
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
 	{	
 		m_MousePosition.x = x;
@@ -866,19 +952,49 @@ public:
 	{
 		m_KeyPressed = true;
 		m_CurrentKey = k;
-		std::cout << "onKeyPressed\n";
-		
 	}
 
 	virtual void onKeyReleased(FRKey k) override
 	{
 		m_KeyPressed = false;
-		std::cout << "onKeyReleased\n";
 	}
 	
 	virtual void RestartGame()
 	{
+		if (m_Health.empty() || m_Ball->GetBallPosition().y > m_WindowHeight)
+		{
+			m_Platform = nullptr;
+			m_Mouse = nullptr;
+			m_WallElements.clear();
+			while (!m_BlockLevels.empty())
+			{
+				m_BlockLevels.pop();
+			}
+			m_Ball = nullptr;
+			m_Health.clear();
+			m_Abilities.clear();
+			Ability::SetGlobalId(0);
 
+			Init();
+		}
+	}
+
+	virtual void GoToNextLevel()
+	{
+		if (!m_BlockLevels.empty())
+		{
+			if (std::all_of(m_BlockLevels.front().begin(), m_BlockLevels.front().end(), [&](const auto& block)
+			{
+				return block->GetBlockDurability() == DURABILITY::INF_HIT;
+			}))
+			{
+				m_BlockLevels.pop();
+				InitVariables();
+				m_Health.push_back(std::make_unique<Health>("data/60-Breakout-Tiles.png"));
+			}
+		}
+		else
+			Close();
 	}
 
 	virtual const char* GetTitle() override
@@ -909,7 +1025,6 @@ protected:
 	bool m_KeyPressed;
 
 	// Mouse
-	POINT p;
 	coords<int> m_MousePosition;
 	std::unique_ptr<Mouse> m_Mouse;
 
@@ -942,6 +1057,7 @@ protected:
 
 	// Abilities
 	std::vector<std::unique_ptr<Ability>> m_Abilities;
+	bool m_isAdditionalWall;
 
 	// Physics
 	bool m_PossibleCollisionWithPlatform;
@@ -958,9 +1074,6 @@ protected:
 	bool m_isVectorCalculated2;
 	bool m_Bounced = false;
 	bool m_Calculate = false;
-
-	int m_SimulationUpdates = 2;
-	float m_SimElapsedTime; 
 
 	// Background
 	Sprite* m_BackgroundSprite;

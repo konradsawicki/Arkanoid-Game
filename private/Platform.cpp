@@ -61,6 +61,16 @@ platform_pair<unsigned int> Platform::GetPlatformCenter()
     return {m_PlatformPosX + m_PlatformSpriteWidth / 2, m_PlatformPosY};
 }
 
+platform_size<float> Platform::GetSize()
+{
+    return {(float)m_PlatformSpriteWidth, (float)m_PlatformSpriteHeight};
+}
+
+platform_pair<float> Platform::GetPosition()
+{
+    return {(float)m_PlatformPosX, (float)m_PlatformPosY};
+}
+
 Platform::~Platform()
 {
     destroySprite(m_PlatformSprite);
