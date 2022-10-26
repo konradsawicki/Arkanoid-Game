@@ -10,7 +10,7 @@
 
 ## Visuals
 
-![gif](visuals/path_finding.gif)
+![gif](visuals/arkanoid-gif.gif)
 
 ## Description
 
