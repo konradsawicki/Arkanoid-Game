@@ -72,7 +72,15 @@ BlockFrame Block::GetBlockFrame()
 
 unsigned int Block::GetId()
 {
-    return m_ID;
+    return m_BlockFrame.width1.frame_id;
+}
+
+void Block::SetId(unsigned int new_id)
+{
+    m_BlockFrame.height1.frame_id = new_id;
+    m_BlockFrame.height2.frame_id = new_id;
+    m_BlockFrame.width1.frame_id = new_id;
+    m_BlockFrame.width2.frame_id = new_id;
 }
 
 void Block::LowerDurability()

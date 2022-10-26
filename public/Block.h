@@ -26,7 +26,7 @@ struct FrameSegment
 {
     int start_x, start_y;
     int end_x, end_y;
-    int radius = 4;
+    int radius = 8;
     unsigned int frame_id;
 };
 
@@ -44,6 +44,7 @@ public:
     DURABILITY GetBlockDurability();
     BlockFrame GetBlockFrame();
     unsigned int GetId();
+    void SetId(unsigned int new_id);
     void LowerDurability();
     
     static unsigned int m_ID;

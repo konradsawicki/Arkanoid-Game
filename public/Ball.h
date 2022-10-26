@@ -22,7 +22,8 @@ public:
     ball_pair<float> GetBallPosition();
     void SetBallPosition(unsigned int x, unsigned int y);
     unsigned int GetBallRadius();
-    ball_pair<float> GetVelocity();
+    ball_pair<float> GetVelocity(bool withoutElapsedTime = false);
+    void SetDefaultSpeed(float speed);
     equation<float> GetPathCoefficients();
 
     void SetVelocity(float x, float y);
@@ -50,6 +51,7 @@ protected:
 
     float m_BallVelocityX;
     float m_BallVelocityY;
+    float m_DefaultSpeed;
     float m_ElapsedTime;
 
 };
