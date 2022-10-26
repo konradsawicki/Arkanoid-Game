@@ -1,5 +1,6 @@
 #pragma once
-
+#include "Ability.h"
+#include <memory>
 
 class Sprite;
 
@@ -15,6 +16,12 @@ struct block_pair
     T width, height;
 };
 
+template <typename T>
+struct block_coords
+{
+    T x, y;
+};
+
 struct BlockType
 {
     DURABILITY Durability;
@@ -26,7 +33,7 @@ struct FrameSegment
 {
     int start_x, start_y;
     int end_x, end_y;
-    int radius = 8;
+    int radius = 4;
     unsigned int frame_id;
 };
 
@@ -44,9 +51,10 @@ public:
     DURABILITY GetBlockDurability();
     BlockFrame GetBlockFrame();
     unsigned int GetId();
+    block_coords<float> GetPosition();
     void SetId(unsigned int new_id);
     void LowerDurability();
-    
+    std::unique_ptr<Ability>* m_SettledAbility = nullptr;
     static unsigned int m_ID;
 
     ~Block();

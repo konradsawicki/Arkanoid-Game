@@ -12,13 +12,13 @@
 #include "Block.h"
 #include "Health.h"
 #include "Ball.h"
+#include "Ability.h"
 #include <regex>
 #include <Windows.h>
 #include <math.h>
 #include <functional>
 #include <algorithm>
 #include <queue>
-#include <thread>
 #include <string>
 #include <iostream>
 
@@ -40,7 +40,6 @@ struct MapFrame
 	FrameSegment width, height1, height2;
 };
 
-
 class MyFramework : public Framework 
 {
 public:
@@ -49,7 +48,9 @@ public:
 		: m_WindowWidth(WindowWidth), m_WindowHeight(WindowHeight),
 			m_NumberOfWallElementsWidth(25), m_NumberOfWallElementsHeight(23),
 				m_HealthNumber(3), m_KeyPressed(false), m_GameActive(false),
-					m_PossibleCollisionWithPlatform(false), x_Start(0), y_Start(0)
+					m_PossibleCollisionWithPlatform(false), x_Start(0), y_Start(0),
+						m_isVectorCalculated1(false), m_isVectorCalculated2(false),
+							m_BlockDestroyedAmount(0)
 	{
 	}
 
@@ -136,7 +137,7 @@ public:
 		{
 			//srand(time(nullptr)); // uncomment if you want different durability distribution each time you play
 			BlockType Block_Type;
-			int b_type = (rand() % 2) + 1;
+			int b_type = (rand() % 3) + 1;
 			if (b_type == 1)
 			{
 				Block_Type.Durability = DURABILITY::ONE_HIT;
@@ -167,11 +168,11 @@ public:
 		for (int y = m_WindowHeight / 6; y < m_WindowHeight / 4; y += m_BlockSize.height)
 		{	
 			int counter = 0;
-			for (int x = m_WallElementSize.width + BlockOffset; x < m_NumberOfWallElementsWidthReal * m_WallElementSize.width / 3; x += m_BlockSize.width)
+			for (int x = m_WallElementSize.width + BlockOffset; x < m_NumberOfWallElementsWidthReal * m_WallElementSize.width; x += m_BlockSize.width)
 			{
 				counter++;
 
-				if (counter % 3 == 0)
+				if (counter % 5 == 0)
 					TempBlock = BlockInfHit;
 				else
 					TempBlock = RandomBlockType();
@@ -180,11 +181,6 @@ public:
 			}
 		}
 		m_BlockLevels.push(std::move(Level));
-
-		m_MapFrame.width.frame_id = m_BlockLevels.front().size();
-		m_MapFrame.height1.frame_id = m_BlockLevels.front().size();
-		m_MapFrame.height2.frame_id = m_BlockLevels.front().size();
-		m_MapId = m_BlockLevels.front().size();
 
 		// std::cout << "width1_st_x=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_x << std::endl;
 		// std::cout << "width1_st_y=" << m_BlockLevels.front()[48]->GetBlockFrame().width1.start_y << std::endl;
@@ -207,13 +203,14 @@ public:
 		// std::cout << "height2_end_y=" << m_BlockLevels.front()[48]->GetBlockFrame().height2.end_y << std::endl;
 		Level.clear();
 
+		Block::m_ID = 0;
 		// Level 2
 		for (int counter = 0, y = m_WallElementSize.height; y < m_WindowHeight / 2; y += m_BlockSize.height, ++counter)
 		{
 			int counter2 = 0;
 			for (int x = m_WallElementSize.width; x < m_NumberOfWallElementsWidthReal * m_WallElementSize.width; x += m_BlockSize.width)
 			{
-				if (y + m_BlockSize.height > m_WindowHeight / 2 && counter2 % 2 == 0)
+				if (y + m_BlockSize.height > m_WindowHeight / 2 && counter2 % 4 == 0)
 					TempBlock = BlockInfHit;
 				else
 					TempBlock = RandomBlockType();
@@ -229,6 +226,10 @@ public:
 
 		// Level 3
 		// ...
+		m_MapFrame.width.frame_id = m_BlockLevels.front().size();
+		m_MapFrame.height1.frame_id = m_BlockLevels.front().size();
+		m_MapFrame.height2.frame_id = m_BlockLevels.front().size();
+		m_MapId = m_BlockLevels.front().size();
 	}
 
 	virtual void InitMouse()
@@ -353,7 +354,7 @@ public:
 
 	virtual void DrawBall()
 	{
-		m_Ball->Draw(m_SimElapsedTime);
+		m_Ball->Draw(m_ElapsedTime);
 	}
 
 	virtual void DrawMouse()
@@ -361,25 +362,35 @@ public:
 		m_Mouse->Draw(m_MousePosition.x, m_MousePosition.y);
 	}
 
+	virtual void DrawAbilities()
+	{
+		if (!m_Abilities.empty())
+		{
+			for (auto& e : m_Abilities)
+			{
+				e->Draw();
+			}
+		}
+	}
+
 	virtual bool Tick() override
 	{	
 		UpdateElapsedTime();
-
+		UpdatePlatformPosition();
+		UpdateBallPosition();
+		UpdateAbilitiesPosition();
 
 		DrawBackground();
 		DrawBlockLevel();
 		DrawWallElements();
 		DrawHealth();
-
-		for (int i = 0; i < m_SimulationUpdates; i++)
-		{
-			UpdatePlatformPosition();
-			UpdateBallPosition();
-			DrawPlatform();
-			DrawBall();
-			CheckCollision();
-		}
+		DrawPlatform();
+		DrawAbilities();
+		DrawBall();
 		DrawMouse();
+
+
+		CheckCollision();
 
 		return false;
 	}
@@ -399,12 +410,19 @@ public:
 			m_Ball->SetBallPosition(m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y - m_Ball->GetBallRadius());
 		else if (m_Calculate)
 		{
-			DynamicResponse(m_ClosestStaticFrameSegments.second);
-			DynamicResponse(m_ClosestStaticFrameSegments.first);
+			DynamicResponseStatic(m_ClosestStaticFrameSegments.first, m_StaticVectorX1, m_StaticVectorY1, 
+				m_TangentPosX1, m_TangentPosY1, m_isVectorCalculated1, m_isVectorCalculated2);
+
+			if (m_ClosestStaticFrameSegments.first.frame_id != m_ClosestStaticFrameSegments.second.frame_id)
+			{
+				DynamicResponseStatic(m_ClosestStaticFrameSegments.second, m_StaticVectorX2, m_StaticVectorY2, 
+					m_TangentPosX2, m_TangentPosY2, m_isVectorCalculated2, m_isVectorCalculated1);
+			}
 		}
+
 		if (m_GameActive)
 		{
-			DynamicResponse(m_Platform->GetPlatfromFrame().width);
+			DynamicResponsePlatform(m_Platform->GetPlatfromFrame().width);
 		}
 			
 	}
@@ -416,10 +434,10 @@ public:
 			switch (m_CurrentKey)
 			{
 				case FRKey::LEFT:
-					m_Platform->MoveLeft(m_SimElapsedTime, x_Start + m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
+					m_Platform->MoveLeft(m_ElapsedTime, x_Start + m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
 					break;
 				case FRKey::RIGHT:
-					m_Platform->MoveRight(m_SimElapsedTime, x_Start + m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
+					m_Platform->MoveRight(m_ElapsedTime, x_Start + m_WallElements[0]->GetWallElementSize().width, x_WallOffset);
 					// if (m_BlockLevels.size() > 1)
 					// 	m_BlockLevels.pop();
 					break;
@@ -427,6 +445,31 @@ public:
 					break;
 			}
 		}
+	}
+
+	virtual void UpdateAbilitiesPosition()
+	{
+		if (!m_Abilities.empty())
+		{
+			for (auto& ability : m_Abilities)
+			{
+				float ab_lower_y = ability->GetPosition().y + ability->GetSize().height;
+				auto it = std::find_if(m_BlockLevels.front().begin(), m_BlockLevels.front().end(), [&](auto& block) {
+					return (block->GetPosition().y - ab_lower_y <= 1.0f &&  block->GetPosition().y - ab_lower_y >= 0.0f &&
+					 		(ability->GetPosition().x + ability->GetSize().width <= block->GetPosition().x + m_BlockSize.width)  &&
+					 			(ability->GetPosition().x >= block->GetPosition().x));
+				});
+
+				if (it == m_BlockLevels.front().end())
+					ability->Drop(m_ElapsedTime);
+				else
+				{
+					(*it)->m_SettledAbility = &ability;
+					ability->Settle(true);
+					ability->SetPosition(ability->GetPosition().x + (float)ability->GetSize().width / 2.0f, (*it)->GetPosition().y - ability->GetSize().height / 2);
+				}
+			}
+		} 
 	}
 
 	virtual float Distance(float x1, float y1, float x2, float y2)
@@ -601,7 +644,38 @@ public:
 
 	}
 
-	virtual void DynamicResponse(FrameSegment F_Seg)
+	virtual coords<float> TangentPosition(FrameSegment F_Seg)
+	{
+		float a = m_Ball->GetPathCoefficients().a;
+		float b = m_Ball->GetPathCoefficients().b;
+		float radius = m_Ball->GetBallRadius();
+		float tanpos_x, tanpos_y;
+		
+		if (F_Seg.start_y == F_Seg.end_y)
+		{
+			if ((float)F_Seg.start_y < m_Ball->GetBallPosition().y)
+				tanpos_y = F_Seg.start_y + radius;
+			else if ((float)F_Seg.start_y > m_Ball->GetBallPosition().y)
+				tanpos_y = F_Seg.start_y - radius;
+			else
+				tanpos_y = F_Seg.start_y;
+
+			tanpos_x = (tanpos_y - b) / a;
+		}
+		else if (F_Seg.start_x == F_Seg.end_x)
+		{
+			if ((float)F_Seg.start_x < m_Ball->GetBallPosition().x)
+				tanpos_x = F_Seg.start_x + radius;
+			else if ((float)F_Seg.start_x > m_Ball->GetBallPosition().x)
+				tanpos_x = F_Seg.start_x - radius;
+			else
+				tanpos_x = F_Seg.start_x;
+			tanpos_y = a * tanpos_x + b;
+		}
+		return {tanpos_x, tanpos_y};
+	}
+
+	virtual void DynamicResponsePlatform(FrameSegment F_Seg)
 	{
 		float LineX1 = (float)(F_Seg.end_x - F_Seg.start_x);
 		float LineY1 = float(F_Seg.end_y - F_Seg.start_y);
@@ -615,6 +689,7 @@ public:
 
 		float ClosestPointX = F_Seg.start_x + t * LineX1;
 		float ClosestPointY = F_Seg.start_y + t * LineY1;
+
 		float distance = Distance(ClosestPointX, ClosestPointY, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
 
 		if (distance < m_Ball->GetBallRadius() + F_Seg.radius)
@@ -644,11 +719,88 @@ public:
 				m_Ball->SetVelocity(tx * dpTan1 + nx * m1, ty * dpTan1 + ny * m1);
 			else
 			{	
-				std::cout << "halo\n";
 				m_Ball->SetVelocity(tx * dpTan1 + nx * m1 * 1.1f, ty * dpTan1 + ny * m1 * 1.1f);
 				if (F_Seg.frame_id < m_BlockLevels.front().size())
 					HitBlock(F_Seg.frame_id);
 			}
+			m_Bounced = true;
+		}
+	}
+
+	virtual void DynamicResponseStatic(FrameSegment F_Seg, float& VectorX, float& VectorY, float& TangentPosX, float& TangentPosY, bool& isVectorCalculated, bool& isVectorCalculatedOther)
+	{
+		float LineX1 = (float)(F_Seg.end_x - F_Seg.start_x);
+		float LineY1 = float(F_Seg.end_y - F_Seg.start_y);
+
+		float LineX2 = m_Ball->GetBallPosition().x - (float)F_Seg.start_x;
+		float LineY2 = m_Ball->GetBallPosition().y - (float)F_Seg.start_y;
+
+		float FrameSegmentLength = LineX1 * LineX1 + LineY1 * LineY1;
+
+		float t = std::max(0.0f, std::min(FrameSegmentLength, (LineX1 * LineX2 + LineY1 * LineY2))) / FrameSegmentLength;
+
+		float ClosestPointX = F_Seg.start_x + t * LineX1;
+		float ClosestPointY = F_Seg.start_y + t * LineY1;
+
+		if (!isVectorCalculated)
+		{
+			isVectorCalculated = true;
+			TangentPosX = TangentPosition(F_Seg).x;
+			TangentPosY = TangentPosition(F_Seg).y;
+			VectorX = - m_Ball->GetVelocity().x;
+			VectorY = - m_Ball->GetVelocity().y;
+			// std::cout << "VectorX=" << VectorX << std::endl;
+			// std::cout << "VectorY=" << VectorY << std::endl;
+			// std::cout << "TangentPosition(F_Seg).x1=" << TangentPosX << std::endl;
+			// std::cout << "TangentPosition(F_Seg).y1=" << TangentPosY << std::endl;
+		}
+
+		float vect_x = m_Ball->GetBallPosition().x - TangentPosX;
+		float vect_y = m_Ball->GetBallPosition().y - TangentPosY;
+		// std::cout << "----VectorX * vect_x=" << VectorX * vect_x << std::endl;
+		// std::cout << "----VectorY * vect_y=" << VectorY * vect_y << std::endl;
+		//std::cout << "id=" << F_Seg.frame_id << std::endl;
+		// if direction of VectorX && vect_x is different (thus product of these two has to be < 0) and the same for VectorY and vect_y
+		if (VectorX * vect_x < 0.0f && VectorY * vect_y < 0.0f && !m_Bounced)
+		{
+			// std::cout << "===============\n";
+			// std::cout << "VectorX * vect_x=" << VectorX * vect_x << std::endl;
+			// std::cout << "VectorY * vect_y=" << VectorY * vect_y << std::endl;
+			// std::cout << "TangentPosition(F_Seg).x2=" << TangentPosition(F_Seg).x << std::endl;
+			// std::cout << "TangentPosition(F_Seg).y2=" << TangentPosition(F_Seg).y << std::endl;
+
+			float distance = Distance(ClosestPointX, ClosestPointY, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
+			
+			// Normal unit vector
+			float nx = (ClosestPointX - m_Ball->GetBallPosition().x) / distance;
+			float ny = (ClosestPointY - m_Ball->GetBallPosition().y) / distance;
+			// Tangent unit vector   nx*tx + ny*ty = 0 <- dot product = 0 -> perpendicular
+			float tx = -ny;
+			float ty = nx; 
+
+			float dpTan1 = m_Ball->GetVelocity(true).x * tx + m_Ball->GetVelocity(true).y * ty;
+			float dpTan2 = -dpTan1;
+
+			float dpNorm1 = m_Ball->GetVelocity(true).x * nx + m_Ball->GetVelocity(true).y * ny;
+			float dpNorm2 = -dpNorm1;
+
+			float mass1 = 1.0f;
+			float mass2 = mass1;
+			float m1 = (dpNorm1 * (mass1 - mass2) + 2.0f * mass2 * dpNorm2) / (mass1 + mass2);
+			float m2 = (dpNorm1 * (mass2 - mass1) + 2.0f * mass1 * dpNorm1) / (mass1 + mass2);
+
+			m_Ball->SetBallPosition(TangentPosX, TangentPosY);
+			m_Ball->SetVelocity(tx * dpTan1 + nx * m1 * 1.1f , ty * dpTan1 + ny * m1 * 1.1f);
+
+			if (F_Seg.frame_id < m_BlockLevels.front().size())
+			{
+				HitBlock(F_Seg.frame_id);
+				std::cout << "Hit!\n";
+			}
+
+
+			isVectorCalculated = false;
+			isVectorCalculatedOther = false;
 			m_Bounced = true;
 		}
 	}
@@ -661,14 +813,33 @@ public:
 		}
 		else if (m_BlockLevels.front()[index]->GetBlockDurability() == DURABILITY::ONE_HIT)
 		{
+			float x = m_BlockLevels.front()[index]->GetPosition().x;
+			float y = m_BlockLevels.front()[index]->GetPosition().y;
+
 			auto it = m_BlockLevels.front().begin() + index;
 			auto it2 = m_BlockLevels.front().erase(it);
 			for (auto i = it2; i != m_BlockLevels.front().end(); i++)
 			{
 				(*i)->SetId((*i)->GetId() - 1);
 			}
-			m_Ball->SetVelocity((m_Ball->GetVelocity(true).x / 1.1f) * 0.9f, (m_Ball->GetVelocity(true).y / 1.1f) * 0.9f);
+			m_Ball->SetVelocity(m_Ball->GetVelocity(true).x * 0.9f / 1.1f , m_Ball->GetVelocity(true).y * 0.9f / 1.1f);
+			m_BlockDestroyedAmount++;
+			//if (m_BlockDestroyedAmount % 2 == 0)
+			SpawnAbility(x, y);
 		}
+	}
+
+	virtual void SpawnAbility(float x, float y)
+	{
+		auto RandomAbility = []()
+		{
+			if (rand() % 2 == 0)
+				return ABILITY_TYPE::POSITIVE;
+			else
+				return ABILITY_TYPE::NEGATIVE;
+		};
+		m_Abilities.push_back(std::make_unique<Ability>(RandomAbility()));
+		m_Abilities.back()->SetPosition(x + m_BlockSize.width / 2, y + m_BlockSize.height / 2);
 	}
 
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
@@ -763,16 +934,28 @@ protected:
 	// Levels
 	std::queue<std::vector<std::unique_ptr<Block>>> m_BlockLevels;
 	pair<int> m_BlockSize;
+	unsigned int m_BlockDestroyedAmount;
 
 	// Ball
 	std::unique_ptr<Ball> m_Ball;
 	bool m_GameActive;
+
+	// Abilities
+	std::vector<std::unique_ptr<Ability>> m_Abilities;
 
 	// Physics
 	bool m_PossibleCollisionWithPlatform;
 	std::vector<std::pair<FrameSegment, coords<float>>> m_IntersectionPoints;
 	std::vector<std::pair<FrameSegment, coords<float>>> m_ClosestFrameSegmentsForStaticInstance;
 	std::pair<FrameSegment, FrameSegment> m_ClosestStaticFrameSegments;
+	float m_StaticVectorX1, m_StaticVectorY1;
+	float m_StaticVectorX2, m_StaticVectorY2;
+	float m_TangentPosX1, m_TangentPosY1;
+	float m_TangentPosX2, m_TangentPosY2;
+	float m_PlatformVectorX1, m_PlatformVectorX2;
+
+	bool m_isVectorCalculated1;
+	bool m_isVectorCalculated2;
 	bool m_Bounced = false;
 	bool m_Calculate = false;
 

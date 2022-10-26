@@ -4,15 +4,6 @@
 #include <math.h>
 #include <iostream>
 
-template <typename T> 
-float sgn(T x) 
-{
-    if (x > 0.0f) 
-        return 1.0f;
-    if (x < 0.0f) 
-        return -1.0f;
-    return 0.0f;
-}
 
 Ball::Ball(const char* Path, int x, int y)
       :  m_BallVelocityX(0), m_BallVelocityY(0), m_ElapsedTime(1)
