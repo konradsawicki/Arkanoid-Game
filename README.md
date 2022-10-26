@@ -30,7 +30,7 @@ player can choose the angle of the ball by pressing the left mouse button.
 The ball speed is not constant. Every reflection from edges increases the speed by 10%. Speed is decreased by 10% on destroying a block. Deflecting by a platform has no impact on the speed. Minimum speed is 40% and maximum is 300% of a default speed.
 
 ### Environment
-The level consists different types of blocks which have different number of hit points. blue blocks are destroyed from the first hit, Green ones - from the second, Gold blocks are indestructible.
+The level consists different types of blocks which have different number of hit points. blue blocks are destroyed from the first hit, Green ones - from the second, Gold blocks are indestructible. There are available two abilities. The first ability (positive) gives a “saving wall” and the second one (negative) damages the player. Saving wall appears on the bottom edge and deflects a ball if a player misses it. Wall can be used one time (it can save from only one missed ball).
 
 ### Win and loss conditions
 
