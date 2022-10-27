@@ -1,6 +1,7 @@
 #pragma once
 #include "Ability.h"
 #include <memory>
+#include <vector>
 
 class Sprite;
 
@@ -54,7 +55,7 @@ public:
     block_coords<float> GetPosition();
     void SetId(unsigned int new_id);
     void LowerDurability();
-    std::unique_ptr<Ability>* m_SettledAbility = nullptr;
+    std::vector<std::unique_ptr<Ability>*> m_SettledAbilities;
     static unsigned int m_ID;
 
     ~Block();
