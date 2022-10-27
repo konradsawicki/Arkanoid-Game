@@ -3,7 +3,7 @@
 #include "Framework.h"
 #include <iostream>
 
-Platform::Platform(const char* Path)
+Platform::Platform(const char* Path, int PosX)
 {
     m_PlatformSprite = createSprite(Path);
 
@@ -11,7 +11,7 @@ Platform::Platform(const char* Path)
     m_PlatformSpriteWidth = m_WindowWidth / 8;
     m_PlatformSpriteHeight = m_WindowHeight / 19;
     setSpriteSize(m_PlatformSprite, m_PlatformSpriteWidth, m_PlatformSpriteHeight);
-    m_PlatformPosX = m_WindowWidth / 2 - m_PlatformSpriteWidth / 2;
+    m_PlatformPosX = PosX - m_PlatformSpriteWidth / 2;
     m_PlatformPosY = m_WindowHeight - m_WindowHeight / 7;
 
     m_PlatformFrame.width.radius = m_PlatformSpriteHeight / 2;

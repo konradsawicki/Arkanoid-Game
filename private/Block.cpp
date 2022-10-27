@@ -106,8 +106,11 @@ void Block::UpdateSpriteLook()
 
 Block::~Block()
 {   
-    if (m_SettledAbility)
-        (*m_SettledAbility)->Settle(false);
-    std::cout << "Block " << m_PosX << " | " << m_PosY << std::endl;
+    if (!m_SettledAbilities.empty())
+    {
+        for (auto& e : m_SettledAbilities)
+            (*e)->Settle(false);
+    }
+        
     destroySprite(m_BlockSprite);
 }

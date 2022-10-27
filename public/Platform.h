@@ -25,7 +25,7 @@ struct platform_size
 class Platform
 {
 public:
-    Platform(const char* Path);
+    Platform(const char* Path, int PosX);
     void Draw();
     void MoveRight(float ElapsedTime, int ElementWidth, int x_Start);
     void MoveLeft(float ElapsedTime, int ElementWidth, int x_Start);
