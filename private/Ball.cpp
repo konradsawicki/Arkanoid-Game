@@ -68,15 +68,15 @@ void Ball::SetDefaultSpeed(float speed)
 void Ball::SetVelocity(float v_x, float v_y)
 {
     float magnitude = sqrtf(v_x * v_x + v_y * v_y);
-    if (magnitude >= 0.4f * m_DefaultSpeed && magnitude <= 2.0f * m_DefaultSpeed)
+    if (magnitude >= 0.4f * m_DefaultSpeed && magnitude <= 3.0f * m_DefaultSpeed)
     {
         m_BallVelocityX = v_x;
         m_BallVelocityY = v_y;
     }
     else
     {
-        m_BallVelocityX *= v_x / abs(v_x);
-        m_BallVelocityY *= v_y / abs(v_y);
+        m_BallVelocityX = abs(m_BallVelocityX) * v_x / abs(v_x);
+        m_BallVelocityY = abs(m_BallVelocityY) * v_y / abs(v_y);
     }
 }
 

@@ -48,7 +48,7 @@ public:
 		ShowWindow(FindWindowA("ConsoleWindowClass", NULL), false);
 	}
 
-	virtual void PreInit(int& width, int& height, bool& fullscreen) override
+	void PreInit(int& width, int& height, bool& fullscreen) override
 	{
 		width = m_WindowWidth;
 		height = m_WindowHeight;
@@ -56,7 +56,7 @@ public:
 		
 	}
 
-	virtual void InitVariables()
+	void InitVariables()
 	{
 		m_NumberOfWallElementsWidth = 25;
 		m_NumberOfWallElementsHeight = 23;
@@ -70,13 +70,13 @@ public:
 		m_isVectorCalculated2 = false;
 		m_BlockDestroyedAmount = 0;
 		m_isAdditionalWall = false;
-		m_BouncedPlatform = false;
+		m_Bounced = false;
+		m_Calculate = false;
+		m_isAdditionalWallChecked = true;
 		m_Abilities.reserve(1000);
-		m_PrevTangentPosX1 = -1.0f, m_PrevTangentPosY1 = -1.0f;
-		m_PrevTangentPosX2 = -1.0f, m_PrevTangentPosY2 = -1.0f;
 	}
 
-	virtual void InitPlatform()
+	void InitPlatform()
 	{
 		m_Platform = std::make_unique<Platform>("data/48-Breakout-Tiles.png", (x_Start + (m_NumberOfWallElementsWidthReal + 2) * m_WallElementSize.width) / 2);
 		m_PlatformId = m_MapFrame.height2.frame_id + 1;
@@ -84,7 +84,7 @@ public:
 		
 	}
 
-	virtual void InitWallElements()
+	void InitWallElements()
 	{
 		
 		m_NumberOfWallElementsWidthReal = m_NumberOfWallElementsWidth - 6; // i don't want whole window width with Wall Elements, so i substract 6: 3 per side;
@@ -120,7 +120,7 @@ public:
 		m_MapFrame.width2.end_y = m_MapFrame.width2.start_y;
 	}
 
-	virtual void InitHealth()
+	void InitHealth()
 	{
 		for (int i = 0; i < m_HealthNumber; ++i)
 		{
@@ -130,7 +130,7 @@ public:
 		m_HealthSize.height = m_Health[0]->GetHealthSize().height;
 	}
 
-	virtual void InitBlockLevels()
+	void InitBlockLevels()
 	{
 		Block::m_ID = 0;
 		unsigned int NumberOfBlocksWidth = 12;
@@ -220,30 +220,30 @@ public:
 		m_MapFrame.height2.frame_id = m_BlockLevels.front().size() + 3;
 	}
 
-	virtual void InitMouse()
+	void InitMouse()
 	{
 		m_Mouse = std::make_unique<Mouse>("data/59-Breakout-Tiles.png");
 		showCursor(false);
 	}
 
-	virtual void InitBall()
+	void InitBall()
 	{
 		m_Ball = std::make_unique<Ball>("data/62-Breakout-Tiles.png", m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y);
 	}
 
-	virtual void InitBackground()
+	void InitBackground()
 	{
 		m_BackgroundSprite = createSprite("data/Background_space.png");
 		setSpriteSize(m_BackgroundSprite, m_WindowWidth, m_WindowHeight);
 	}
 
-	virtual void InitTimePoints()
+	void InitTimePoints()
 	{
 		m_StartTimePoint = getTickCount();
 		m_EndTimePoint = getTickCount();
 	}
 
-	virtual bool Init() override
+	bool Init() override
 	{	
 		InitVariables();
 		InitTimePoints();
@@ -258,17 +258,17 @@ public:
 		return true;
 	}
 
-	virtual void Close() override
+	void Close() override
 	{
 
 	}
 
-	virtual void DrawBackground()
+	void DrawBackground()
 	{
 		drawSprite(m_BackgroundSprite, 0, 0);
 	}
 
-	virtual void DrawWallElements()
+	void DrawWallElements()
 	{
 		int counter = 0;
 											// +2 because of plus 2 elements from height from both sides
@@ -305,7 +305,7 @@ public:
 		}
 	}
 
-	virtual void DrawBlockLevel()
+	void DrawBlockLevel()
 	{
 		if (!m_BlockLevels.empty())
 		{		
@@ -316,7 +316,7 @@ public:
 		}
 	}
 
-	virtual void DrawHealth()
+	void DrawHealth()
 	{
 		if (!m_Health.empty())
 		{
@@ -329,35 +329,36 @@ public:
 				if (counter < HealthNumberInRow)
 				{
 					e->Draw(m_WindowWidth - x_WallOffset + x1, m_WindowHeight / 4);
-					x1 += m_WallElementSize.width;
+					x1 += m_HealthSize.width;
 					counter++;
+					
 				}
 				else
 				{
-					e->Draw(m_WindowWidth - x_WallOffset + x2, m_WindowHeight / 4 + m_WallElementSize.height + 10);
-					x2 += m_WallElementSize.width;
+					e->Draw(m_WindowWidth - x_WallOffset + x2, m_WindowHeight / 4 + m_HealthSize.height + 10);
+					x2 += m_HealthSize.width;
 					counter++;
 				}
 			}
 		}
 	}
 
-	virtual void DrawPlatform()
+	void DrawPlatform()
 	{	
 		m_Platform->Draw();
 	}
 
-	virtual void DrawBall()
+	void DrawBall()
 	{
 		m_Ball->Draw(m_ElapsedTime);
 	}
 
-	virtual void DrawMouse()
+	void DrawMouse()
 	{
 		m_Mouse->Draw(m_MousePosition.x, m_MousePosition.y);
 	}
 
-	virtual void DrawAbilities()
+	void DrawAbilities()
 	{
 		if (!m_Abilities.empty())
 		{
@@ -368,7 +369,7 @@ public:
 		}
 	}
 
-	virtual bool Tick() override
+	bool Tick() override
 	{	
 		UpdateElapsedTime();
 		UpdatePlatformPosition();
@@ -385,14 +386,7 @@ public:
 		DrawMouse();
 
 
-		if (m_isAdditionalWall && m_ClosestFrameSegmentsForStaticInstance.empty() && 
-		(m_ClosestStaticFrameSegments.first.frame_id != m_MapFrame.width2.frame_id && 
-			m_ClosestStaticFrameSegments.second.frame_id != m_MapFrame.width2.frame_id))
-		{
-			m_Bounced = true;
-			CheckCollision();
-		}
-
+		CheckAdditionalWall();
 		CheckCollision();
 
 		RestartGame();
@@ -400,7 +394,7 @@ public:
 		return false;
 	}
 
-	virtual void UpdateElapsedTime()
+	void UpdateElapsedTime()
 	{
 		m_EndTimePoint = getTickCount();
 		m_ElapsedTime = float(m_EndTimePoint - m_StartTimePoint);
@@ -408,21 +402,19 @@ public:
 		
 	}
 
-	virtual void UpdateBallPosition()
+	void UpdateBallPosition()
 	{
 		if (!m_GameActive)
 			m_Ball->SetBallPosition(m_Platform->GetPlatformCenter().x, m_Platform->GetPlatformCenter().y - m_Ball->GetBallRadius());
 		else if (m_Calculate)
 		{
 			DynamicResponseStatic(m_ClosestStaticFrameSegments.first, m_StaticVectorX1, m_StaticVectorY1, 
-				m_TangentPosX1, m_TangentPosY1, m_isVectorCalculated1, m_isVectorCalculated2,
-					m_PrevTangentPosX1, m_PrevTangentPosY1);
+				m_TangentPosX1, m_TangentPosY1, m_isVectorCalculated1, m_isVectorCalculated2);
 
 			if (m_ClosestStaticFrameSegments.first.frame_id != m_ClosestStaticFrameSegments.second.frame_id)
 			{
 				DynamicResponseStatic(m_ClosestStaticFrameSegments.second, m_StaticVectorX2, m_StaticVectorY2, 
-					m_TangentPosX2, m_TangentPosY2, m_isVectorCalculated2, m_isVectorCalculated1,
-						m_PrevTangentPosX2, m_PrevTangentPosY2);
+					m_TangentPosX2, m_TangentPosY2, m_isVectorCalculated2, m_isVectorCalculated1);
 			}
 		}
 
@@ -433,7 +425,7 @@ public:
 
 	}
 
-	virtual void UpdatePlatformPosition()
+	void UpdatePlatformPosition()
 	{
 		if (m_KeyPressed)
 		{
@@ -451,7 +443,7 @@ public:
 		}
 	}
 
-	virtual void UpdateAbilitiesPosition()
+	void UpdateAbilitiesPosition()
 	{
 		if (!m_Abilities.empty())
 		{
@@ -497,14 +489,23 @@ public:
 		} 
 	}
 
-	virtual float Distance(float x1, float y1, float x2, float y2)
+	void CheckAdditionalWall()
+	{
+		if (m_isAdditionalWall && !m_isAdditionalWallChecked)
+		{
+			m_isAdditionalWallChecked = true;
+			m_Bounced = true;
+		}
+	}
+
+	float Distance(float x1, float y1, float x2, float y2)
 	{
 		return sqrtf((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	}
 
-	virtual coords<float> FindStaticIntersectionPoints(FrameSegment F_Segment, int i)
+	coords<float> FindStaticIntersectionPoints(FrameSegment F_Segment, int i)
 	{
-		float radius = m_Ball->GetBallRadius();
+		float radius = (float)m_Ball->GetBallRadius();
 		float a = m_Ball->GetPathCoefficients().a;
 		float b = m_Ball->GetPathCoefficients().b;
 
@@ -529,12 +530,10 @@ public:
 				if (p_x >= (float)F_Segment.start_x && p_x <= (float)F_Segment.end_x)
 				{
 					m_IntersectionPoints.push_back({F_Segment, {p_x, p_y}});
-					
 				}
 				else if (p_x >= (float)F_Segment.end_x && p_x <= (float)F_Segment.start_x)
 				{	
 					m_IntersectionPoints.push_back({F_Segment, {p_x, p_y}});
-
 				}
 			}
 		}
@@ -557,7 +556,7 @@ public:
 		return {0, 0};
 	}
 
-	virtual void FindClosestPointForStaticInstance()
+	void FindClosestPointForStaticInstance()
 	{
 		if (!m_IntersectionPoints.empty())
 		{	
@@ -575,21 +574,28 @@ public:
 		}
 	}
 
-	virtual void FindClosestStaticFrameSegments()
+	void FindClosestStaticFrameSegments()
 	{
 
 		if (!m_ClosestFrameSegmentsForStaticInstance.empty())
 		{	
-			if (m_ClosestFrameSegmentsForStaticInstance.size() > 2)
+			if (m_ClosestFrameSegmentsForStaticInstance.size() >= 2)
 			{
 				std::sort(m_ClosestFrameSegmentsForStaticInstance.begin(), m_ClosestFrameSegmentsForStaticInstance.end(), 
 				[&](const auto& kv1, const auto& kv2)
 				{
 					return Distance(kv1.second.x, kv1.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y) < Distance(kv2.second.x, kv2.second.y, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
 				});
+
+				m_ClosestStaticFrameSegments.first = m_ClosestFrameSegmentsForStaticInstance[0].first;
+				m_ClosestStaticFrameSegments.second = m_ClosestFrameSegmentsForStaticInstance[1].first;
 			}
-			m_ClosestStaticFrameSegments.first = m_ClosestFrameSegmentsForStaticInstance[0].first;
-			m_ClosestStaticFrameSegments.second = m_ClosestFrameSegmentsForStaticInstance[1].first;
+			else if (m_ClosestFrameSegmentsForStaticInstance.size() == 1)
+			{
+				m_ClosestStaticFrameSegments.first = m_ClosestFrameSegmentsForStaticInstance[0].first;
+				m_ClosestStaticFrameSegments.second = m_ClosestFrameSegmentsForStaticInstance[0].first;
+			}
+
 			m_ClosestFrameSegmentsForStaticInstance.clear();
 			m_Calculate = true;
 		}
@@ -600,7 +606,7 @@ public:
 			
 	}
 
-	virtual void CheckCollision()
+	void CheckCollision()
 	{
 		if (m_Bounced)
 		{
@@ -643,7 +649,7 @@ public:
 		}
 	}
 
-	virtual void ShootBall()
+	void ShootBall()
 	{
 		float v_x = (float)m_MousePosition.x - m_Ball->GetBallPosition().x;
 		float v_y = (float)m_MousePosition.y - m_Ball->GetBallPosition().y;
@@ -659,7 +665,7 @@ public:
 
 	}
 
-	virtual coords<float> TangentPosition(FrameSegment F_Seg)
+	coords<float> TangentPosition(FrameSegment F_Seg)
 	{
 		float a = m_Ball->GetPathCoefficients().a;
 		float b = m_Ball->GetPathCoefficients().b;
@@ -690,7 +696,7 @@ public:
 		return {tanpos_x, tanpos_y};
 	}
 
-	virtual void DynamicResponsePlatform(FrameSegment F_Seg)
+	void DynamicResponsePlatform(FrameSegment F_Seg)
 	{
 		float LineX1 = (float)(F_Seg.end_x - F_Seg.start_x);
 		float LineY1 = float(F_Seg.end_y - F_Seg.start_y);
@@ -733,16 +739,14 @@ public:
 			m_Ball->SetVelocity(tx * dpTan1 + nx * m1, ty * dpTan1 + ny * m1);
 
 			m_Bounced = true;
-			m_BouncedPlatform = true;
 
 			m_isVectorCalculated1 = false;
 			m_isVectorCalculated2 = false;
 		}
 	}
 
-	virtual void DynamicResponseStatic(FrameSegment F_Seg, float& VectorX, float& VectorY, 
-		float& TangentPosX, float& TangentPosY, bool& isVectorCalculated, bool& isVectorCalculatedOther,
-			float& PrevTangentPosX, float& PrevTangentPosY)
+	void DynamicResponseStatic(FrameSegment F_Seg, float& VectorX, float& VectorY, 
+		float& TangentPosX, float& TangentPosY, bool& isVectorCalculated, bool& isVectorCalculatedOther)
 	{
 		
 		float LineX1 = (float)(F_Seg.end_x - F_Seg.start_x);
@@ -763,22 +767,19 @@ public:
 			isVectorCalculated = true;
 			TangentPosX = TangentPosition(F_Seg).x; // kiedy leci na rog to nie jest styczny
 			TangentPosY = TangentPosition(F_Seg).y;
-			VectorX = - m_Ball->GetVelocity().x;
-			VectorY = - m_Ball->GetVelocity().y;
+			VectorX = m_Ball->GetBallPosition().x - TangentPosX; // reference vectors
+			VectorY = m_Ball->GetBallPosition().y - TangentPosY;
 		}
 
 		float vect_x = m_Ball->GetBallPosition().x - TangentPosX;
 		float vect_y = m_Ball->GetBallPosition().y - TangentPosY;
-		
-		float distance = Distance(ClosestPointX, ClosestPointY, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
-
 		// if directions of reference vector VectorX/Y and live vector vect_x/y are different, 
-		// then product of these two has to be < 0 (theoretically, because when I had < 0.0f there were bugs,
+		// then the dot product of these two has to be < 0 (theoretically, because when I had < 0.0f there were bugs,
 		// and with < 5.0f is much better (it means that they are really close and the directions of vect_x and y are about to switch)
-		if (VectorX * vect_x < 5.0f && VectorY * vect_y < 5.0f && !m_Bounced)
+		// I am also making it dependent of velocity
+		if (VectorX * vect_x < std::max(5.0f, 5.0f * abs(m_Ball->GetVelocity().x)) && VectorY * vect_y < std::max(5.0f, 5.0f * abs(m_Ball->GetVelocity().y)) && !m_Bounced)
 		{
 			float distance = Distance(ClosestPointX, ClosestPointY, m_Ball->GetBallPosition().x, m_Ball->GetBallPosition().y);
-			
 			// Normal unit vector
 			float nx = (ClosestPointX - m_Ball->GetBallPosition().x) / distance;
 			float ny = (ClosestPointY - m_Ball->GetBallPosition().y) / distance;
@@ -796,7 +797,7 @@ public:
 			float mass1 = 1.0f;
 			float mass2 = mass1;
 			float m1 = (dpNorm1 * (mass1 - mass2) + 2.0f * mass2 * dpNorm2) / (mass1 + mass2);
-			float m2 = (dpNorm1 * (mass2 - mass1) + 2.0f * mass1 * dpNorm1) / (mass1 + mass2);
+			float m2 = (dpNorm2 * (mass2 - mass1) + 2.0f * mass1 * dpNorm1) / (mass1 + mass2);
 
 
 
@@ -806,9 +807,6 @@ public:
 			// when t=0 or t=FrameSegmentLength the position isnt TangentPosX and TangentPosY, 
 			// but it's quite good aproximation, and the physics model seems to behave properl
 			m_Ball->SetBallPosition(TangentPosX, TangentPosY);
-
-			PrevTangentPosX = TangentPosX;
-			PrevTangentPosY = TangentPosY;
 
 			if (F_Seg.frame_id < m_BlockLevels.front().size())
 			{
@@ -825,7 +823,7 @@ public:
 		}
 	}
 
-	virtual void HitBlock(unsigned int index)
+	void HitBlock(unsigned int index)
 	{
 		if (m_BlockLevels.front()[index]->GetBlockDurability() == DURABILITY::TWO_HIT)
 		{
@@ -849,7 +847,7 @@ public:
 		}
 	}
 
-	virtual void SpawnAbility(float x, float y)
+	void SpawnAbility(float x, float y)
 	{
 		auto RandomAbility = []()
 		{
@@ -862,7 +860,7 @@ public:
 		m_Abilities.back()->SetPosition(x + m_BlockSize.width / 2, y + m_BlockSize.height / 2);
 	}
 
-	virtual void UseAbility(std::unique_ptr<Ability>* ability_ptr)
+	void UseAbility(std::unique_ptr<Ability>* ability_ptr)
 	{
 		if ((*ability_ptr)->GetType() == ABILITY_TYPE::POSITIVE)
 		{
@@ -872,26 +870,27 @@ public:
 			m_Health.pop_back();
 	}
 
-	virtual void AddWall()
+	void AddWall()
 	{
 		if (!m_isAdditionalWall)
 		{
 			m_isAdditionalWall = true;
+			m_isAdditionalWallChecked = false;
 		}
 	}
 
-	virtual void RemoveWall()
+	void RemoveWall()
 	{
 		m_isAdditionalWall = false;
 	}
 
-	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) override
+	void onMouseMove(int x, int y, int xrelative, int yrelative) override
 	{	
 		m_MousePosition.x = x;
 		m_MousePosition.y = y;	
 	}
 
-	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) override
+	void onMouseButtonClick(FRMouseButton button, bool isReleased) override
 	{
 		if (!m_GameActive)
 		{
@@ -902,18 +901,18 @@ public:
 		}
 	}
 
-	virtual void onKeyPressed(FRKey k) override
+	void onKeyPressed(FRKey k) override
 	{
 		m_KeyPressed = true;
 		m_CurrentKey = k;
 	}
 
-	virtual void onKeyReleased(FRKey k) override
+	void onKeyReleased(FRKey k) override
 	{
 		m_KeyPressed = false;
 	}
 	
-	virtual void RestartGame()
+	void RestartGame()
 	{
 		if (m_Health.empty() || m_Ball->GetBallPosition().y > m_WindowHeight || // <- real constraints
 				m_Ball->GetBallPosition().y < 0 || m_Ball->GetBallPosition().x > m_WindowWidth || m_Ball->GetBallPosition().x < 0)
@@ -930,6 +929,8 @@ public:
 			m_Health.clear();
 			m_Abilities.clear();
 			Ability::SetGlobalId(0);
+			m_IntersectionPoints.clear();
+			m_ClosestFrameSegmentsForStaticInstance.clear();
 
 			Init();
 
@@ -938,7 +939,7 @@ public:
 		}
 	}
 
-	virtual void GoToNextLevel()
+	void GoToNextLevel()
 	{
 		if (!m_BlockLevels.empty())
 		{
@@ -968,7 +969,7 @@ public:
 			RestartGame();
 	}
 
-	virtual const char* GetTitle() override
+	const char* GetTitle() override
 	{
 		return "Arcanoid";
 	}
@@ -1040,16 +1041,14 @@ protected:
 	float m_StaticVectorX2, m_StaticVectorY2;
 	float m_TangentPosX1, m_TangentPosY1;
 	float m_TangentPosX2, m_TangentPosY2;
-	float m_PrevTangentPosX1, m_PrevTangentPosY1;
-	float m_PrevTangentPosX2, m_PrevTangentPosY2;
 
 	float m_PlatformVectorX1, m_PlatformVectorX2;
-	float m_BouncedPlatform;
-
+	bool m_Bounced;
+	bool m_Calculate;
 	bool m_isVectorCalculated1;
 	bool m_isVectorCalculated2;
-	bool m_Bounced = false;
-	bool m_Calculate = false;
+	bool m_isAdditionalWallChecked;
+
 
 	// Background
 	Sprite* m_BackgroundSprite;
