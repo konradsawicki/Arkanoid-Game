@@ -1,4 +1,4 @@
-1. open cmd in Arkanoid-Game folder
+1. open CLI (cmd) in Arkanoid-Game folder
 2. type make (or your version of running a make exe, e.g. mingw32-make)
 3. type Arkanoid
 4. play
