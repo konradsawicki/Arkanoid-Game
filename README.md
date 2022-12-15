@@ -44,7 +44,7 @@ The game is restarted after victory/loss.
 
 ### Main features
 - Frame independent movement
-- Ray casting
+- Line tracing
 - Circle collision detection
 - Linear interpolation
 
